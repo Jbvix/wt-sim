@@ -1,17 +1,17 @@
 # WT-SIM — Netlify Deploy Config
-# App estática single-file, sem build step
+# App estática modular (ES Modules nativos), sem build step
 
 [build]
   publish = "."
   command = ""
 
-# Redireciona / para o simulador
+# Retrocompatibilidade: winchsim.html continua acessível diretamente
 [[redirects]]
-  from = "/"
-  to   = "/winchsim.html"
+  from   = "/winchsim"
+  to     = "/winchsim.html"
   status = 200
 
-# Headers de segurança compatíveis com CDN (Three.js via jsdelivr)
+# Cabeçalhos de segurança (compatíveis com CDN — Three.js via jsdelivr)
 [[headers]]
   for = "/*"
   [headers.values]
@@ -19,8 +19,7 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy        = "strict-origin-when-cross-origin"
 
-# Cache longo para assets JS externos (via service worker / proxy não aplicável aqui)
 [[headers]]
-  for = "/winchsim.html"
+  for = "/index.html"
   [headers.values]
     Cache-Control = "no-cache"

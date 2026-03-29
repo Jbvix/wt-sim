@@ -1,0 +1,325 @@
+/**
+ * @file        src/js/main.js
+ * @description Ponto de entrada do WT-SIM — orquestra a inicialização,
+ *              o loop de animação, os eventos globais e o cenário inicial atracado.
+ * @author      Jossian Brito <jossiancosta@gmail.com>
+ * @version     2.0.0
+ * @since       2026-03-28
+ */
+
+import * as THREE from 'three';
+
+// ── Módulos internos ──────────────────────────────────────
+import { g, shipState, mooringLines, raycaster, mouse, pointerDownPos } from './state/globals.js';
+import { tugs }                from './fleet/tugData.js';
+import { switchTug, setupFleetManager } from './fleet/fleetManager.js';
+import { setupGraphics, onWindowResize } from './graphics/scene.js';
+import { buildWorld }          from './graphics/models.js';
+import { updatePhysics }       from './physics/tugKinetics.js';
+import { setupJoysticks }      from './ui/joysticks.js';
+import { setupWinchPanel }     from './ui/winchPanel.js';
+import { setupShipPanel }      from './ui/shipPanel.js';
+import {
+  setupEnvironmentPanel,
+  animateWindsock,
+  animateCurrentCompass,
+} from './ui/envPanel.js';
+
+// ─────────────────────────────────────────────────────────
+// 1. INICIALIZAÇÃO
+// ─────────────────────────────────────────────────────────
+
+/**
+ * Ponto de entrada — inicializa todos os subsistemas e arranca o loop de animação.
+ * Chamado uma única vez pelo DOMContentLoaded.
+ */
+function init() {
+  console.log('DEBUG: INIT INICIOU');
+
+  setupGraphics();
+  buildWorld();
+  setupJoysticks();
+  setupWinchPanel();
+  setupShipPanel();
+  setupEnvironmentPanel();
+  setupFleetManager();
+  setupEventListeners();
+
+  // Referências DOM para a bússola de corrente
+  g.uiCurrentCompass = document.getElementById('current-compass');
+  g.uiCurrentArrow   = document.getElementById('current-arrow');
+
+  // Ativa o rebocador de popa como padrão e prepara o cenário
+  switchTug('stern');
+  setupDockedScenario();
+
+  requestAnimationFrame(animate);
+  console.log('DEBUG: INIT TERMINOU');
+}
+
+// ─────────────────────────────────────────────────────────
+// 2. CENÁRIO INICIAL — NAVIO ATRACADO
+// ─────────────────────────────────────────────────────────
+
+/**
+ * Prepara a cena inicial: posiciona os rebocadores nos seus locais de largada
+ * e liga as 4 espias do Panamax aos cabeços mais próximos do cais.
+ */
+function setupDockedScenario() {
+  // Posiciona as meshes dos rebocadores nos startPos físicos
+  Object.values(tugs).forEach(tug => {
+    tug.state.position.copy(tug.startPos);
+    if (tug.meshes?.tugboat) {
+      tug.meshes.tugboat.position.set(tug.startPos.x, 0, tug.startPos.y);
+      tug.meshes.tugboat.rotation.y = tug.state.heading;
+    }
+  });
+
+  // Sincroniza o navio com o seu estado físico inicial
+  if (g.merchantShip) {
+    g.merchantShip.position.set(shipState.position.x, 0, shipState.position.y);
+    g.merchantShip.rotation.y = shipState.heading;
+  }
+
+  // Liga as 4 espias BB do navio ao cabeço do cais mais próximo em X
+  mooringLines.forEach(line => {
+    if (!line.shipRef) return;
+
+    const closestBollard = g.pierBollards.reduce((best, cur) => {
+      const shipX = line.shipRef.position.x; // posição local no navio
+      return Math.abs(cur.x - shipX) < Math.abs(best.x - shipX) ? cur : best;
+    });
+
+    line.pierRef = closestBollard.ref;
+    line.active  = true;
+
+    // Comprimento frouxo = distância inicial (espia tensa = L0 da distância atual)
+    const shipWorld = new THREE.Vector3();
+    line.shipRef.getWorldPosition(shipWorld);
+    const pierWorld = new THREE.Vector3();
+    line.pierRef.getWorldPosition(pierWorld);
+    line.lengthL0 = shipWorld.distanceTo(pierWorld);
+
+    if (line.ropeLine) line.ropeLine.visible = true;
+  });
+}
+
+// ─────────────────────────────────────────────────────────
+// 3. LOOP DE ANIMAÇÃO
+// ─────────────────────────────────────────────────────────
+
+/**
+ * Loop principal — chamado pelo browser via requestAnimationFrame.
+ * Executa física, atualiza cabos e renderiza a cena.
+ *
+ * @param {number} timestamp - Tempo atual em ms (fornecido pelo browser)
+ */
+function animate(timestamp) {
+  requestAnimationFrame(animate);
+
+  try {
+    const dt = (timestamp - g.lastTime) / 1000;
+    g.lastTime = timestamp;
+
+    if (dt > 0 && dt < 1) {
+      updatePhysics(dt);
+    }
+
+    // ── Renderização dos Cabos dos Rebocadores (Bézier) ──
+
+    Object.values(tugs).forEach(tug => {
+      const tRope   = tug.rope;
+      const tMeshes = tug.meshes;
+
+      if (!tRope || !tMeshes?.ropeLine) return;
+
+      if (tRope.status >= 1 && tMeshes.winchDrum && tRope.connectedBollard) {
+        const startPos = new THREE.Vector3();
+        tMeshes.winchDrum.getWorldPosition(startPos);
+
+        const endPos = new THREE.Vector3();
+        tRope.connectedBollard.getWorldPosition(endPos);
+
+        // Ponto de controlo da Bézier — catenária simplificada
+        const sag   = Math.min(tRope.tension * 0.05, 5);
+        const half  = new THREE.Vector3().lerpVectors(startPos, endPos, 0.5);
+        const ctrl  = new THREE.Vector3(half.x, Math.min(startPos.y, endPos.y) - sag, half.z);
+        const curve = new THREE.QuadraticBezierCurve3(startPos, ctrl, endPos);
+
+        const pts = curve.getPoints(20);
+        tMeshes.ropeLine.geometry.setFromPoints(pts);
+        tMeshes.ropeLine.visible = true;
+
+      } else if (tRope.status === 0) {
+        tMeshes.ropeLine.visible = false;
+      }
+    });
+
+    // ── Renderização das Espias de Amarração (Bézier) ────
+
+    mooringLines.forEach(line => {
+      if (!line.active || !line.ropeLine || !line.shipRef || !line.pierRef) return;
+
+      const startPos = new THREE.Vector3();
+      line.shipRef.getWorldPosition(startPos);
+      const endPos = new THREE.Vector3();
+      line.pierRef.getWorldPosition(endPos);
+
+      const half = new THREE.Vector3().lerpVectors(startPos, endPos, 0.5);
+      const ctrl = new THREE.Vector3(half.x, Math.min(startPos.y, endPos.y) - 1, half.z);
+      const pts  = new THREE.QuadraticBezierCurve3(startPos, ctrl, endPos).getPoints(20);
+
+      line.ropeLine.geometry.setFromPoints(pts);
+      line.ropeLine.visible = true;
+    });
+
+    // ── Animações de Ambiente ─────────────────────────────
+    animateWindsock();
+    animateCurrentCompass();
+
+    // ── Render ────────────────────────────────────────────
+    g.controls?.update();
+    g.renderer.render(g.scene, g.camera);
+
+  } catch (err) {
+    const errLog = document.getElementById('error-log');
+    if (errLog) {
+      errLog.style.display = 'block';
+      errLog.innerText     = `ERRO: ${err.message}\n${err.stack?.slice(0, 300)}`;
+    }
+    console.error('[WT-SIM] Erro no animate():', err);
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// 4. EVENTOS GLOBAIS
+// ─────────────────────────────────────────────────────────
+
+/**
+ * Regista todos os event listeners globais da aplicação:
+ * redimensionamento, zoom e raycasting de interação.
+ */
+function setupEventListeners() {
+  window.addEventListener('resize', onWindowResize, false);
+
+  // ── Zoom Rápido ───────────────────────────────────────
+
+  document.getElementById('btn-zoom-in').addEventListener('click', () => {
+    const dir = new THREE.Vector3()
+      .subVectors(g.controls.target, g.camera.position)
+      .normalize()
+      .multiplyScalar(20);
+    g.camera.position.add(dir);
+    g.controls.update();
+  });
+
+  document.getElementById('btn-zoom-out').addEventListener('click', () => {
+    const dir = new THREE.Vector3()
+      .subVectors(g.camera.position, g.controls.target)
+      .normalize()
+      .multiplyScalar(20);
+    g.camera.position.add(dir);
+    g.controls.update();
+  });
+
+  // ── Raycasting (Clique / Toque na cena 3D) ────────────
+
+  const canvasEl = g.renderer.domElement;
+
+  canvasEl.addEventListener('pointerdown', (e) => {
+    pointerDownPos.set(e.clientX, e.clientY);
+  });
+
+  canvasEl.addEventListener('pointerup', (e) => {
+    // Ignora drags > 10 px (rotação de câmara)
+    if (Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y) > 10) return;
+
+    mouse.x =  (e.clientX / window.innerWidth)  * 2 - 1;
+    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, g.camera);
+    const intersects = raycaster.intersectObjects(g.hitboxes);
+
+    if (intersects.length > 0) {
+      handleInteraction(intersects[0].object.userData);
+    } else if (g.ropeState?.status === 1) {
+      // Clicou no vazio com cabo na mão — aborta
+      g.ropeState.status   = 0;
+      g.ropeLine.visible   = false;
+      document.getElementById('status-message').style.display = 'none';
+    }
+  });
+}
+
+// ─────────────────────────────────────────────────────────
+// 5. INTERAÇÃO — MÁQUINA DE ESTADOS DO CABO
+// ─────────────────────────────────────────────────────────
+
+/**
+ * Máquina de estados para a ligação do cabo do guincho:
+ *   0 (Solto) → 1 (Na Mão) → 2 (Conectado) → 0 (Largado)
+ *
+ * Também trata a desamarração das espias do navio.
+ *
+ * @param {Object}  userData
+ * @param {string}  userData.type           - 'winch' | 'bollard' | 'mooring'
+ * @param {string}  [userData.tugId]        - ID do rebocador (type='winch')
+ * @param {THREE.Mesh} [userData.ref]       - Referência ao cabeço (type='bollard')
+ * @param {string}  [userData.mooringId]    - ID da espia (type='mooring')
+ */
+function handleInteraction(userData) {
+  const msgEl       = document.getElementById('status-message');
+  const btnDisconn  = document.getElementById('btn-disconnect');
+
+  // ── Estado 0: Seleciona o Guincho ─────────────────────
+  if (g.ropeState?.status === 0 && userData.type === 'winch') {
+    if (userData.tugId) switchTug(userData.tugId);
+
+    g.ropeState.status = 1;
+    g.ropeLine.visible = true;
+    msgEl.style.display = 'block';
+
+  // ── Estado 1: Liga ao Cabeço ──────────────────────────
+  } else if (g.ropeState?.status === 1 && userData.type === 'bollard') {
+    g.ropeState.status           = 2;
+    g.ropeState.connectedBollard = userData.ref;
+    msgEl.style.display          = 'none';
+    btnDisconn.style.display     = 'block';
+
+    // Comprimento inicial = distância exata no momento da ligação
+    const wPos = new THREE.Vector3();
+    g.winchDrum.getWorldPosition(wPos);
+    const bPos = new THREE.Vector3();
+    userData.ref.getWorldPosition(bPos);
+    g.ropeState.lengthL0 = wPos.distanceTo(bPos);
+
+  // ── Estado 2: Desconectar clicando no cabeço ligado ───
+  } else if (g.ropeState?.status === 2 && userData.type === 'bollard'
+             && userData.ref === g.ropeState.connectedBollard) {
+    window.attemptDisconnect?.();
+
+  // ── Estado 0: Desamarrar Espia do Navio ───────────────
+  } else if (g.ropeState?.status === 0 && userData.type === 'mooring') {
+    const line = mooringLines.find(l => l.id === userData.mooringId);
+    if (line?.active) {
+      line.active             = false;
+      line.ropeLine.visible   = false;
+
+      msgEl.innerText             = `${line.type} LARGADO!`;
+      msgEl.style.display         = 'block';
+      msgEl.style.background      = 'rgba(16, 185, 129, 0.9)';
+
+      setTimeout(() => {
+        if (g.ropeState?.status === 0) msgEl.style.display = 'none';
+        msgEl.style.background = 'rgba(234, 179, 8, 0.9)';
+        msgEl.innerText        = 'Selecione o Cabeço no Cais';
+      }, 2000);
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// 6. ARRANQUE
+// ─────────────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', init);

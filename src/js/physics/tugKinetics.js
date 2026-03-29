@@ -283,7 +283,7 @@ export function updatePhysics(dt) {
       const vBolZ = shipState.velocity.y - bGlobal_rX * shipState.angularVelocity;
       const vStretch = (0 - vBolX) * dirX + (0 - vBolZ) * dirZ; // cais estático
 
-      let tension = 200 * stretch + 400 * vStretch;
+      let tension = 400 * stretch + 800 * vStretch;
       if (tension < 0) tension = 0;
       line.tension = tension;
 
@@ -317,30 +317,44 @@ export function updatePhysics(dt) {
     shipTorque += stern_rZ * (fRudderLZ * -sSinH) - stern_rX * (fRudderLZ * sCosH);
   }
 
-  // Força do Vento no navio
+  // Força do Vento no navio (Deriva Aerodinâmica Quadrática F = 1/2 * rho * Cd * A * V^2 / 1000)
   const windRads = envState.windDir * Math.PI / 180;
   const windMps  = envState.windMag * 0.5144;
-  const swFx = 0.00006 * 1000 * (windMps * Math.cos(windRads) * sCosH + windMps * Math.sin(windRads) * sSinH);
-  const swFz = 0.00006 * 6000 * (-windMps * Math.cos(windRads) * sSinH + windMps * Math.sin(windRads) * sCosH);
-  shipForceGlobal.x += swFx * sCosH - swFz * sSinH;
-  shipForceGlobal.y += swFx * sSinH + swFz * sCosH;
+  
+  // Velocidade local relativa do vento
+  const loc_Wx = windMps * Math.cos(windRads - shipState.heading);
+  const loc_Wz = windMps * Math.sin(windRads - shipState.heading); 
+  
+  // Ar: 0.5 * 1.225 / 1000 = 0.0006125. Cdx ~ 0.8, Cdz ~ 1.0
+  const swFx_local = 0.0006125 * 600  * loc_Wx * Math.abs(loc_Wx);
+  const swFz_local = 0.0006125 * 4000 * loc_Wz * Math.abs(loc_Wz);
 
-  // ── 7. Integração e Drag do Panamax ───────────────────
+  // Arrasto Hidrodinâmico e Força da Corrente (Substitui o SHIP_DRAG)
+  const relWaterX = curX - shipState.velocity.x;
+  const relWaterZ = curZ - shipState.velocity.y;
+  const loc_WaterX = relWaterX * sCosH + relWaterZ * sSinH;
+  const loc_WaterZ = -relWaterX * sSinH + relWaterZ * sCosH;
+  
+  // Água: 0.5 * 1025 / 1000 = 0.5125. Áreas submersas: frontal 450m2, lateral 3150m2
+  const hwFx_local = 0.5125 * 450  * loc_WaterX * Math.abs(loc_WaterX);
+  const hwFz_local = 0.5125 * 3150 * loc_WaterZ * Math.abs(loc_WaterZ);
+  
+  // Integra todas as forças para o referencial Global
+  const totalFx_local = swFx_local + hwFx_local;
+  const totalFz_local = swFz_local + hwFz_local;
+  
+  shipForceGlobal.x += totalFx_local * sCosH - totalFz_local * sSinH;
+  shipForceGlobal.y += totalFx_local * sSinH + totalFz_local * sCosH;
+
+  // Torque induzido (simplificação: Vento abeam centrado gera pouco torque puro, mas adicionamos drag angular pesado)
+  const angularDrag = -0.5125 * 50000 * shipState.angularVelocity * Math.abs(shipState.angularVelocity);
+  shipTorque += angularDrag;
+
+  // ── 7. Integração e Cinemática do Panamax ───────────────────
 
   shipState.velocity.x      += (shipForceGlobal.x / shipState.mass) * dt;
   shipState.velocity.y      += (shipForceGlobal.y / shipState.mass) * dt;
   shipState.angularVelocity += (shipTorque         / shipState.inertia) * dt;
-
-  const sVRelX   = shipState.velocity.x - curX;
-  const sVRelZ   = shipState.velocity.y - curZ;
-  const sLocalX  = sVRelX * sCosH + sVRelZ * sSinH;
-  const sLocalZ  = -sVRelX * sSinH + sVRelZ * sCosH;
-
-  const sDampLX  = sLocalX * Math.pow(SHIP_DRAG.surge,   dt);
-  const sDampLZ  = sLocalZ * Math.pow(SHIP_DRAG.sway,    dt);
-  shipState.velocity.x      = (sDampLX * sCosH - sDampLZ * sSinH) + curX;
-  shipState.velocity.y      = (sDampLX * sSinH + sDampLZ * sCosH) + curZ;
-  shipState.angularVelocity *= Math.pow(SHIP_DRAG.angular, dt);
 
   shipState.position.x += shipState.velocity.x * dt;
   shipState.position.y += shipState.velocity.y * dt;

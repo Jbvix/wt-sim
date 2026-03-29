@@ -81,13 +81,22 @@ function setupDockedScenario() {
     g.merchantShip.rotation.y = shipState.heading;
   }
 
-  // Liga as 4 espias BB do navio ao cabeço do cais mais próximo em X
+  // Liga as 4 espias BB do navio ao cais (Lançantes e Espringues)
   mooringLines.forEach(line => {
     if (!line.shipRef) return;
 
+    const shipX = line.shipRef.position.x; // posição local no navio
+    let targetOffset = 0;
+    // Lançantes esticam para fora, Espringues cruzam para dentro
+    if (line.id === 'bow-head')          targetOffset = 45;
+    else if (line.id === 'bow-spring')   targetOffset = -45;
+    else if (line.id === 'stern-spring') targetOffset = 45;
+    else if (line.id === 'stern-head')   targetOffset = -45;
+
+    const targetX = shipX + targetOffset;
+
     const closestBollard = g.pierBollards.reduce((best, cur) => {
-      const shipX = line.shipRef.position.x; // posição local no navio
-      return Math.abs(cur.x - shipX) < Math.abs(best.x - shipX) ? cur : best;
+      return Math.abs(cur.x - targetX) < Math.abs(best.x - targetX) ? cur : best;
     });
 
     line.pierRef = closestBollard.ref;
@@ -247,6 +256,10 @@ function setupEventListeners() {
       g.ropeState.status   = 0;
       g.ropeLine.visible   = false;
       document.getElementById('status-message').style.display = 'none';
+    } else if (g.activeMooringLineId) {
+      // Clicou no vazio com espia do navio na mão — aborta (larga na água)
+      g.activeMooringLineId = null;
+      document.getElementById('status-message').style.display = 'none';
     }
   });
 }
@@ -298,19 +311,42 @@ function handleInteraction(userData) {
              && userData.ref === g.ropeState.connectedBollard) {
     window.attemptDisconnect?.();
 
-  // ── Estado 0: Desamarrar Espia do Navio ───────────────
+  // ── Interação com Espias do Navio (Selecionar para ligar) ───
   } else if (g.ropeState?.status === 0 && userData.type === 'mooring') {
     const line = mooringLines.find(l => l.id === userData.mooringId);
-    if (line?.active) {
-      line.active             = false;
-      line.ropeLine.visible   = false;
+    if (line) {
+      line.active           = false;
+      line.pierRef          = null;
+      line.ropeLine.visible = false;
+      g.activeMooringLineId = line.id;
 
-      msgEl.innerText             = `${line.type} LARGADO!`;
+      msgEl.innerText             = `${line.type.toUpperCase()} SELECIONADO!\nSelecione um cabeço no cais.`;
       msgEl.style.display         = 'block';
-      msgEl.style.background      = 'rgba(16, 185, 129, 0.9)';
+      msgEl.style.background      = 'rgba(239, 68, 68, 0.9)'; // Vermelho
+    }
+
+  // ── Ligar Espia do Navio ao Cabeço do Cais ────────────────
+  } else if (g.ropeState?.status === 0 && g.activeMooringLineId && userData.type === 'bollard' && userData.isDynamic === false) {
+    const line = mooringLines.find(l => l.id === g.activeMooringLineId);
+    if (line) {
+      line.pierRef          = userData.ref;
+      line.active           = true;
+      line.ropeLine.visible = true;
+
+      const shipWorld = new THREE.Vector3();
+      line.shipRef.getWorldPosition(shipWorld);
+      const pierWorld = new THREE.Vector3();
+      line.pierRef.getWorldPosition(pierWorld);
+      line.lengthL0 = shipWorld.distanceTo(pierWorld);
+
+      g.activeMooringLineId = null;
+
+      msgEl.innerText             = `${line.type.toUpperCase()} CONECTADO!`;
+      msgEl.style.display         = 'block';
+      msgEl.style.background      = 'rgba(16, 185, 129, 0.9)'; // Verde
 
       setTimeout(() => {
-        if (g.ropeState?.status === 0) msgEl.style.display = 'none';
+        if (g.ropeState?.status === 0 && !g.activeMooringLineId) msgEl.style.display = 'none';
         msgEl.style.background = 'rgba(234, 179, 8, 0.9)';
         msgEl.innerText        = 'Selecione o Cabeço no Cais';
       }, 2000);

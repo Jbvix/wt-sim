@@ -53,6 +53,7 @@ export const g = {
   // Controlo da frota
   activeTugId:    'stern',  /** @type {'stern'|'bow'} */
   isTwinControl:  false,
+  activeMooringLineId: null, /** @type {string|null} - Espia do Panamax na mão */
 
   // Ponteiros de estado do tug ativo (apontam para tugs[activeTugId].*)
   tugState:   null,

@@ -142,17 +142,17 @@ export function updatePhysics(dt) {
 
         ropeForce.set(dirX * tension, dirZ * tension);
 
-        // Aplica reação ao Panamax (Newton III)
+        // Aplica reação ao Panamax (Newton III) -> T = Rx*Fz - Rz*Fx
         if (tRope.connectedBollard.userData?.isDynamic) {
           const sForX = -ropeForce.x;
           const sForZ = -ropeForce.y;
           shipForceGlobal.x += sForX;
           shipForceGlobal.y += sForZ;
-          shipTorque += bRZ * sForX - bRX * sForZ;
+          shipTorque += bRX * sForZ - bRZ * sForX;
         }
 
-        // Torque no rebocador pelo cabo
-        tugTorque += rZ * ropeForce.x - rX * ropeForce.y;
+        // Torque no rebocador pelo cabo (Rx*Fz - Rz*Fx)
+        tugTorque += rX * ropeForce.y - rZ * ropeForce.x;
       } else {
         tRope.tension = 0;
       }
@@ -174,8 +174,8 @@ export function updatePhysics(dt) {
 
         tugForceX += fX;
         tugForceZ += fZ;
-        // Binário = r × F (braço de popa)
-        tugTorque += (t.pos.z * fX - t.pos.x * fZ) * STEERING_BOOST;
+        // Binário = r × F (braço de popa) -> T = Rx*Fz - Rz*Fx
+        tugTorque += (t.pos.x * fZ - t.pos.z * fX) * STEERING_BOOST;
 
         if (arrow) {
           arrow.setDirection(new THREE.Vector3(-Math.cos(t.angle), 0, -Math.sin(t.angle)).normalize());
@@ -290,7 +290,7 @@ export function updatePhysics(dt) {
       if (tension > 0) {
         shipForceGlobal.x += dirX * tension;
         shipForceGlobal.y += dirZ * tension;
-        shipTorque += bGlobal_rZ * (dirX * tension) - bGlobal_rX * (dirZ * tension);
+        shipTorque += bGlobal_rX * (dirZ * tension) - bGlobal_rZ * (dirX * tension);
       }
     } else {
       line.tension = 0;
@@ -314,7 +314,7 @@ export function updatePhysics(dt) {
     shipForceGlobal.y += fRudderLZ *  sCosH;
     const stern_rX = -110 * sCosH;
     const stern_rZ = -110 * sSinH;
-    shipTorque += stern_rZ * (fRudderLZ * -sSinH) - stern_rX * (fRudderLZ * sCosH);
+    shipTorque += stern_rX * (fRudderLZ * sCosH) - stern_rZ * (fRudderLZ * -sSinH);
   }
 
   // Força do Vento no navio (Deriva Aerodinâmica Quadrática F = 1/2 * rho * Cd * A * V^2 / 1000)

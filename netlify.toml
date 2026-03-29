@@ -1,28 +1,26 @@
 # WT-SIM — Netlify Deploy Config
-# Single-file HTML app, sem build step necessário
+# App estática single-file, sem build step
 
 [build]
-  publish = "."       # Serve a raiz do repositório
-  command = ""        # Sem build command
+  publish = "."
+  command = ""
 
+# Redireciona / para o simulador
 [[redirects]]
   from = "/"
   to   = "/winchsim.html"
-  status = 200        # Rewrite (não redireciona a URL do browser)
+  status = 200
 
-[build.environment]
-  NODE_VERSION = "18"
-
+# Headers de segurança compatíveis com CDN (Three.js via jsdelivr)
 [[headers]]
   for = "/*"
   [headers.values]
-    # Permite SharedArrayBuffer (necessário para algumas APIs WebGL avançadas)
-    Cross-Origin-Opener-Policy  = "same-origin"
-    Cross-Origin-Embedder-Policy = "require-corp"
-    # Cache: HTML sem cache, assets com cache longo
-    Cache-Control = "no-cache, no-store, must-revalidate"
+    X-Frame-Options        = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy        = "strict-origin-when-cross-origin"
 
+# Cache longo para assets JS externos (via service worker / proxy não aplicável aqui)
 [[headers]]
-  for = "*.js"
+  for = "/winchsim.html"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "no-cache"

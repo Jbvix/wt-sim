@@ -18,7 +18,7 @@ Este glossário reúne as terminologias oficiais utilizadas na Praticagem, Marin
 
 Em operações de Píer e Praticagem Brasileira, as amarras do navio ao cais recebem nomes pela sua função física vetorial:
 
-*   **Espia:** Qualquer cabo grosso utilizado para a amarração do navio ao cais.
+*   **Espia:** Qualquer cabo utilizado para a amarração do navio ao cais. Na prática contínua, uma espia é simplesmente um cabo grosso de amarração.
 *   **Lançante:** Cabo que amarra a extremidade do navio empurrando para o exterior, servindo para impedir que a embarcação avance ou recue o seu bico em relação ao cais. 
     *   *Lançante de Proa:* Da proa para a vante (frente) no cais.
     *   *Lançante de Popa:* Da popa para a ré (trás) no cais.
@@ -32,9 +32,9 @@ Em operações de Píer e Praticagem Brasileira, as amarras do navio ao cais rec
 
 Termos de interação entre o Guindaste/Aparelho do Rebocador e a tensão do cabo ao Mercante:
 
-*   **Caçar:** Puxar ou recolher um cabo com o auxílio do guincho hidráulico para o colocar sob tensão ou encurtar distâncias (Inglês: *Heave*).
+*   **Colher (cabo):** Puxar ou recolher um cabo com o auxílio do guincho hidráulico para o colocar sob tensão ou encurtar distâncias (Inglês: *Heave*).
 *   **Rondar:** Recolher o "seio" (barriga preguioçosa/frouxa) do cabo apenas até ele ficar esticado ou "teso", mas sem arrastar o peso em si.
-*   **Arriar:** Libertar gradualmente ou ceder o cabo ativamente girando o guincho para aliviar a tensão (Inglês: *Pay-out*).
+*   **Pagar (cabo):** Libertar gradualmente ou ceder o cabo ativamente girando o guincho para aliviar a tensão (Inglês: *Pay-out*).
 *   **Lascar / Dar brando:** Libertar uma parte curta do cabo para diminuir a sua força de tensão antes que quebre.
 *   **Freio (Brake):** O sistema estático do tambor do guincho que bloqueia saídas extra. Em rebocadores de porto, está ajustado abaixo do "Ponto de Ruptura" do cabo HMPE, desapertando em prol de evitar quebras mortais.
 

@@ -1,0 +1,155 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Outfit:wght@700;900&display=swap');
+
+:root {
+  --bg-dark: #0a1128;
+  --bg-panel: rgba(16, 28, 60, 0.7);
+  --accent-blue: #00c7b7;
+  --text-main: #e2e8f0;
+  --text-muted: #94a3b8;
+  --border-glow: rgba(0, 199, 183, 0.3);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: radial-gradient(circle at center, #1b2741, var(--bg-dark));
+  color: var(--text-main);
+  line-height: 1.6;
+  min-height: 100vh;
+  padding: 40px 20px;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+h1 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 3rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #ffffff, var(--accent-blue));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  color: var(--text-muted);
+}
+
+.nav-link {
+  display: inline-block;
+  margin-bottom: 30px;
+  color: var(--accent-blue);
+  text-decoration: none;
+  font-weight: 600;
+  border: 1px solid var(--accent-blue);
+  padding: 8px 16px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+  background: var(--accent-blue);
+  color: #000;
+  box-shadow: 0 0 15px var(--border-glow);
+}
+
+.section-glass {
+  background: var(--bg-panel);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  border-radius: 12px;
+  padding: 30px;
+  margin-bottom: 40px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s ease;
+}
+
+.section-glass:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-glow);
+}
+
+h2 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2rem;
+  color: #fff;
+  border-bottom: 2px solid var(--accent-blue);
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+h3 {
+  font-size: 1.3rem;
+  color: var(--accent-blue);
+  margin-top: 25px;
+  margin-bottom: 10px;
+}
+
+p {
+  margin-bottom: 15px;
+}
+
+/* Caixa Matemática Dedicada */
+.math-box {
+  background: rgba(0, 0, 0, 0.4);
+  border-left: 4px solid var(--accent-blue);
+  padding: 20px;
+  border-radius: 6px;
+  margin: 20px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: auto;
+}
+
+.math-desc {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-top: 10px;
+  text-align: center;
+}
+
+ul {
+  margin-left: 20px;
+  margin-bottom: 15px;
+}
+
+li {
+  margin-bottom: 8px;
+}
+
+strong {
+  color: #fff;
+}
+
+footer {
+  text-align: center;
+  margin-top: 60px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  h1 { font-size: 2.2rem; }
+  .section-glass { padding: 20px; }
+}

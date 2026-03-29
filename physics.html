@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Física e Hidrodinâmica - WT-SIM</title>
+  <link rel="stylesheet" href="src/css/physics.css">
+  
+  <!-- MathJax Config e CDN -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      },
+      svg: {
+        fontCache: 'global'
+      }
+    };
+  </script>
+  <script type="text/javascript" id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+  </script>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>WT-SIM</h1>
+      <div class="subtitle">Modelo Matemático: Física, Cinemática e Hidrodinâmica</div>
+      <br>
+      <a href="index.html" class="nav-link">← Voltar para o Simulador</a>
+    </header>
+
+    <main>
+      <!-- MOTOR NUMÉRICO -->
+      <section class="section-glass">
+        <h2>🔬 Motor Numérico de Integração</h2>
+        <p>
+          O simulador assenta num <strong>Integrador de Euler Explícito</strong> que avalia ininterruptamente o somatório de forças e momentos aplicados a cada corpo não estático (Panamax e Rebocadores) a cada <em>frame</em> de animação. A variação de tempo real limitou-se a <code>dt = 0.1s</code> para garantir 100% de estabilidade mecânica, mesmo sob tensão esporádica maciça.
+        </p>
+        <div class="math-box">
+          $$\vec{v}_{t+1} = \vec{v}_t + \left( \frac{\sum \vec{F}}{m} \right) \Delta t$$
+          $$\vec{\omega}_{t+1} = \vec{\omega}_t + \left( \frac{\sum \vec{\tau}}{I} \right) \Delta t$$
+          <div class="math-desc">A equação base que impulsiona cada polígono 3D do simulador.</div>
+        </div>
+      </section>
+
+      <!-- DINÂMICA DE FLUIDOS -->
+      <section class="section-glass">
+        <h2>🌊 Arrasto Ambiental Numérico (Corrente e Vento)</h2>
+        <p>
+          Ao invés de interpolações fixas de translação, o <strong>WT-SIM</strong> modela os elementos de fluído (água e ar) de forma realista utilizando a lei do <strong>Arrasto Quadrático</strong> ($V^2$). As rajadas de vento e correntes fortes castigam de forma impiedosa áreas amplas como o costado do navio ($4000\ m^2$).
+        </p>
+        <p>
+          Calculamos as velocidades relativas do navio face aos fluidos e devolvemos os valores convertidos em arrasto contrafásico.
+        </p>
+        <div class="math-box">
+          $$F_{Drag} = \frac{1}{2} \cdot \rho \cdot C_D \cdot A \cdot (\vec{V}_{flow} - \vec{V}_{ship})^2$$
+          <div class="math-desc">A Força gerada obedece à velocidade ao quadrado. Um vento que duplica a velocidade (de 20 kn para 40 kn) quadruplica a carga sentida nos cabos de amarração.</div>
+        </div>
+        <ul>
+          <li><strong>Massa Específica (Água):</strong> $\rho = 1025\ kg/m^3$, multiplicada na proporção de Calado face à área imersa.</li>
+          <li><strong>Densidade (Ar):</strong> $\rho = 1.225\ kg/m^3$ testada abertamente sobre o costado vivo (Muralhas do Panamax).</li>
+        </ul>
+      </section>
+
+      <!-- TORQUE ROTACIONAL -->
+      <section class="section-glass">
+        <h2>⚙️ Torque e Binário Náutico (Guinada)</h2>
+        <p>
+          Os cabos e propulsores ASD (Azimutais) raramente empurram as embarcações no seu Centro de Gravidade. Forças aplicadas nas vigas distantes da proa ou da popa introduzem rotações avassaladoras. Para simular a Guinda / Rate of Turn (ROT), o Produto Vetorial ($r \times F$) bidimensional foi ajustado para coordenadas XZ, onde o Eixo Y atua na verticalidade:
+        </p>
+        <div class="math-box">
+          $$\vec{\tau}_{y} = R_x \cdot F_z - R_z \cdot F_x$$
+          <div class="math-desc">Qualquer tração fora do centro geométrico aciona imediatamente Velocidade Angular contra as barreiras.</div>
+        </div>
+        <p>
+          A propulsão do Rebocador aplica Torque ao próprio rebocador (eixo Z de popa), mas quando o rebocador traciona o Cabo HMPE atrelado a um cabeço do Panamax, a força é transferida ao navio pelo <strong>Princípio de Ação e Reação de Newton</strong>, forçando ou anulando o balanço do mercante (Reboque Indireto).
+        </p>
+      </section>
+
+      <!-- CABOS HMPE -->
+      <section class="section-glass">
+        <h2>⚓ Física do Cabo de Amarração e HMPE</h2>
+        <p>
+          A Tensão mecânica comunicada pela Interface é simulada estritamente como um <strong>Sistema de Mola e Amortecedor Viscoso</strong> (Damped Harmonic Oscillator). Cada cabo mede constantemente o <em>Stretch</em> (delta de deformação a partir de $L_0$) e a velocidade tangencial entre os cabeços.
+        </p>
+        <div class="math-box">
+          $$T = K \cdot (dist - L_0) + c \cdot v_{stretch}$$
+          <div class="math-desc">$K$ corresponde à Constante de Rigidez do material (Módulo de Elasticidade de Hooke) e $c$ ao fator de atrito e aquecimento interno.</div>
+        </div>
+        <p>
+          <strong>Cálculo Angular Transposto:</strong> Como as embarcações giram, as velocidades locais de cada cabeço são calculadas a partir da velocidade do Centro de Massa do ente somada à sua Derivada Cinemática no raio correspondente ($V_{bollardX} = V_{cmX} - R_{z} \cdot \omega$). Assim, se o navio oscilar perigosamente de través, os cabestrantes sentem o solavanco e entram no limiar <strong>CRÍTICO (> 45t)</strong>.
+        </p>
+      </section>
+
+    </main>
+
+    <footer>
+      <p>Página gerada em resposta à modularização do projeto.</p>
+      <p>Desenvolvido por <strong>Jossian Brito</strong> &bull; WT-SIM GitHub Repository</p>
+    </footer>
+  </div>
+
+</body>
+</html>

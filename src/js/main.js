@@ -149,7 +149,7 @@ function animate(timestamp) {
         const endPos = new THREE.Vector3();
         tRope.connectedBollard.getWorldPosition(endPos);
 
-        // Ponto de controlo da Bézier — catenária simplificada
+        // Ponto de controle da Bézier — catenária simplificada
         const sag   = Math.min(tRope.tension * 0.05, 5);
         const half  = new THREE.Vector3().lerpVectors(startPos, endPos, 0.5);
         const ctrl  = new THREE.Vector3(half.x, Math.min(startPos.y, endPos.y) - sag, half.z);

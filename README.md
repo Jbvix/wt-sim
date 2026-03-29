@@ -19,7 +19,7 @@ Anteriormente alojado em Monolith (`winchsim.html`), transitou para uma **Arquit
 
 ### 🛥️ Rebocadores Azimutais (ASD)
 - **Operação de Dupla Frota** — Comando e alternância seamless dos rebocadores "Popa" (Vermelho) e "Proa" (Verde).
-- **Controlos HMI Industriais** — Replica comandos ASD da vida real com "Dial direcional" e "Slider de RPM" separados.
+- **Controles HMI Industriais** — Replica comandos ASD da vida real com "Dial direcional" e "Slider de RPM" separados.
 - **Modo Twin Control** — Permite emparelhamento síncrono dos azimutes (thrusters) Bombordo/Estibordo.
 
 ### 🌊 Motor de Física Ambiental Rigorosa (`tugKinetics.js`)
@@ -75,7 +75,7 @@ wt-sim/
 
 ---
 
-## 🎯 Controlos e HUD
+## 🎯 Controles e HUD
 
 | Ferramenta / Ícone         | Ação |
 |-----------------------------|---|

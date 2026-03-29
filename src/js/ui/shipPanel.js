@@ -14,7 +14,7 @@ import { shipState } from '../state/globals.js';
 // ─────────────────────────────────────────────────────────
 
 /**
- * Liga os controlos do painel de pilotagem do Panamax.
+ * Liga os controles do painel de pilotagem do Panamax.
  * Deve ser chamado uma vez em init().
  */
 export function setupShipPanel() {

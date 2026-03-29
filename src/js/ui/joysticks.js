@@ -45,11 +45,11 @@ export function setupJoysticks() {
 }
 
 // ─────────────────────────────────────────────────────────
-// 2. FACTORY — Controlo Azimutal Individual
+// 2. FACTORY — Controle Azimutal Individual
 // ─────────────────────────────────────────────────────────
 
 /**
- * Cria e liga um controlo azimutal completo (Dial + Slider).
+ * Cria e liga um controle azimutal completo (Dial + Slider).
  * O Dial define a direção; o Slider define a potência (RPM).
  * Duplo clique no dial zera a potência (para máquina).
  *

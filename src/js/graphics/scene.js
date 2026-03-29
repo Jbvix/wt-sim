@@ -64,7 +64,7 @@ export function setupGraphics() {
   dirLight.shadow.camera.bottom = -shadowArea;
   g.scene.add(dirLight);
 
-  // ── Controlos de Câmara ───────────────────────────────
+  // ── Controles de Câmara ───────────────────────────────
 
   g.controls = new OrbitControls(g.camera, g.renderer.domElement);
   g.controls.enableDamping = true;

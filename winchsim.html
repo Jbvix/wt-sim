@@ -97,7 +97,7 @@
             opacity: 0.8;
         }
 
-        /* Rodapé: Controlos (Mobile-First: perto dos polegares) */
+        /* Rodapé: Controles (Mobile-First: perto dos polegares) */
         #footer-controls {
             display: flex;
             justify-content: space-between;
@@ -116,7 +116,7 @@
             gap: 8px;
         }
 
-        /* [NOVO - Etapa 5] Grupo de Controlo Desmembrado (Dial + Slider) */
+        /* [NOVO - Etapa 5] Grupo de Controle Desmembrado (Dial + Slider) */
         .control-group {
             display: flex;
             flex-direction: row;
@@ -356,7 +356,7 @@
     <div id="portrait-warning">
         <svg viewBox="0 0 24 24"><path d="M16 4h4v16h-4M8 20H4V4h4"/><path d="M12 8v8"/><path d="M9 11l3-3 3 3"/></svg>
         <h2 style="font-family: inherit;">Rode o Dispositivo</h2>
-        <p style="font-family: inherit; font-size: 0.9rem; max-width: 80%; opacity: 0.8;">Os controlos Azimutais (Twin Joystick) exigem que jogue em modo Paisagem (na horizontal) para alcance dos seus polegares.</p>
+        <p style="font-family: inherit; font-size: 0.9rem; max-width: 80%; opacity: 0.8;">Os controles Azimutais (Twin Joystick) exigem que jogue em modo Paisagem (na horizontal) para alcance dos seus polegares.</p>
     </div>
 
     <!-- Container Renderizador 3D -->
@@ -442,7 +442,7 @@
 
         <div id="status-message">Selecione o Cabeço no Cais</div>
 
-        <!-- Rodapé: Controlos -->
+        <!-- Rodapé: Controles -->
         <!-- [NOVO - Etapa 10] Botão do Gestor de Frota (centrado, acima do painel do guincho) -->
         <div style="position: absolute; left: 50%; bottom: 220px; transform: translateX(-50%); z-index: 20; display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: auto;">
             <div class="telemetry-label" style="text-shadow: 1px 1px 2px #000;">Rebocador Ativo</div>
@@ -646,7 +646,7 @@
             requestAnimationFrame(animate);
         }
 
-        // [NOVO] Alterna Controlo da Frota
+        // [NOVO] Alterna Controle da Frota
         function switchTug(id) {
             activeTugId = id;
             const t = tugs[id];
@@ -1165,7 +1165,7 @@
         function setupEventListeners() {
             window.addEventListener('resize', onWindowResize, false);
             
-            // Eventos de Zoom Controlo Rápido
+            // Eventos de Zoom Controle Rápido
             document.getElementById('btn-zoom-in').addEventListener('click', () => {
                 const dir = new THREE.Vector3().subVectors(controls.target, camera.position).normalize();
                 camera.position.add(dir.multiplyScalar(20)); // Aproxima 20 metros por clique
@@ -1314,7 +1314,7 @@
             const btnDisconnect = document.getElementById('btn-disconnect'); // [NOVO - 3.2]
 
             if (ropeState.status === 0 && userData.type === 'winch') {
-                // Selecionou um guincho específico - Troca imediatamente o controlo para ele!
+                // Selecionou um guincho específico - Troca imediatamente o controle para ele!
                 if(userData.tugId) switchTug(userData.tugId);
                 
                 ropeState.status = 1;
@@ -2019,7 +2019,7 @@
                 uiCurrentCompass.style.opacity = envState.currentMag > 0.05 ? "1" : "0.2";
             }
 
-            // 2. Atualiza controlos da câmara
+            // 2. Atualiza controles da câmara
             controls.update();
 
             // 3. Renderiza a cena

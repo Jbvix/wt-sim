@@ -50,7 +50,7 @@ export const g = {
   navLights:     [],  /** @type {THREE.PointLight[]} Luzes de navegação */
   pierBollards:  [],  /** @type {Array<{x:number, ref:THREE.Mesh}>} Cabeços do cais */
 
-  // Controlo da frota
+  // Controle da frota
   activeTugId:    'stern',  /** @type {'stern'|'bow'} */
   isTwinControl:  false,
   activeMooringLineId: null, /** @type {string|null} - Espia do Panamax na mão */
@@ -69,7 +69,7 @@ export const g = {
 // ─────────────────────────────────────────────────────────
 
 /**
- * Estado cinemático e de controlo do navio mercante.
+ * Estado cinemático e de controle do navio mercante.
  * Posição em metros no plano (X, Z) — Z positivo = lado do mar.
  */
 export const shipState = {

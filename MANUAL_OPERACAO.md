@@ -4,21 +4,21 @@ Bem-vindo ao **WT-SIM**, o simulador de rebocadores ASD (Azimuth Stern Drive) op
 
 ---
 
-## 1. Interface Gráfica e Controlo da Câmara
+## 1. Interface Gráfica e Controle da Câmara
 
-O simulador arranca exibindo uma perspetiva superior da manobra. Toda a interface funciona por sobreposição (HUD) e possui janelas de controlo dedicadas.
+O simulador arranca exibindo uma perspetiva superior da manobra. Toda a interface funciona por sobreposição (HUD) e possui janelas de controle dedicadas.
 - **Rotação de Câmara:** Clique com o lado esquerdo do rato e arraste (ou "Drag" no ecrã touch) para visualizar o navio desde qualquer ângulo 3D.
 - **Zoom In / Out:** Use a roda do rato, os gestos de "Pinch" no telemóvel, ou os botões de **Lupa (+ e -)** posicionados no ecrã.
 - **Painel Ambiente:** Menu retrátil à esquerda (`[ Atmosfera & Mar ]`) onde define livremente variáveis de tempo e clima: Intensidade de Corrente e do Vento, Nevoeiro, e Direções incidentes.
 
 ---
 
-## 2. Controlo dos Rebocadores (Dual ASD HMI)
+## 2. Controle dos Rebocadores (Dual ASD HMI)
 
 A pilotagem principal foca-se nos **Dials e Sliders Diagonais**, concebidos como réplicas das consolas físicas industriais de thrusters gémeos (Twin Azipods).
 
 ### 2.1 Telegrafo e Direção
-No canto inferior esquerdo tens a estação de controlo correspondente à unidade marítima atualmente selecionada.
+No canto inferior esquerdo tens a estação de controle correspondente à unidade marítima atualmente selecionada.
 - **Roda do Azimute (Dial Circular Azul):** Ao clicares e arrastares nestes discos, indicas para onde o propulsor direciona o seu caudal de água. Relembra que isto atua como vetor de tração na popa do rebocador. Duplo-clique aqui reseta automaticamente para 0%.
 - **Alavanca de RPM (Slider Horizontal):** Comanda a carga em RPM do motor (0 a 100%). Atua na Força efetiva enviada ao disco azimutal, sentindo-se imediata aceleração no ecrã e rotações do HUD associado ("BB" Bombordo, "BE" Estibordo).
 - **HUD Superior das Máquinas:** Indicador digital que atesta o real RPM e Graus (ex: `BB | 100% | 045º`).

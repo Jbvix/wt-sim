@@ -14,7 +14,7 @@ import { g, envState } from '../state/globals.js';
 // ─────────────────────────────────────────────────────────
 
 /**
- * Liga todos os controlos do painel de Atmosfera & Mar.
+ * Liga todos os controles do painel de Atmosfera & Mar.
  * Deve ser chamado uma vez em init(), após buildWorld().
  */
 export function setupEnvironmentPanel() {

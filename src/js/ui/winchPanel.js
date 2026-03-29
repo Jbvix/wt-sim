@@ -1,6 +1,6 @@
 /**
  * @file        src/js/ui/winchPanel.js
- * @description Painel de controlo do Guincho — Caçar (Heave), Arriar (Pay),
+ * @description Painel de controle do Guincho — Caçar (Heave), Arriar (Pay),
  *              Freio (Brake) e Desconectar. Inclui interlock de segurança
  *              que bloqueia a largada sob tensão elevada.
  * @author      Jossian Brito <jossiancosta@gmail.com>

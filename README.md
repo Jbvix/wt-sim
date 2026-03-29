@@ -1,120 +1,100 @@
 # WT-SIM — Simulador de Rebocagem Portuária
 
-> Simulador 3D de operações de rebocagem com rebocadores azimutais, física de cabos HMPE, modelo Panamax dinâmico e HMI Twin Joystick — desenvolvido inteiramente em Three.js, sem dependências de servidor.
+> Simulador 3D para navegadores marítimos de operações de rebocagem portuária com rebocadores azimutais, física catenária de cabos HMPE, interações avançadas de amarração dinâmica, e modelo Panamax de fluidos. **Alojado e em produção no Netlify.**
 
 ![Three.js](https://img.shields.io/badge/Three.js-r160-black?logo=three.js)
-![HTML5](https://img.shields.io/badge/HTML5-Single%20File-orange?logo=html5)
-![Licença](https://img.shields.io/badge/Licença-MIT-green)
+![ES Modules](https://img.shields.io/badge/ES6-Modulos-yellow?logo=javascript)
+![Netlify](https://img.shields.io/badge/Deploy-Netlify-00C7B7?logo=netlify)
 
 ---
 
 ## 🚢 Sobre o Projeto
 
-O **WT-SIM** é um simulador realístico de operações de rebocagem portuária destinado a treino e estudo de manobras. O utilizador opera dois rebocadores azimutais (Popa e Proa) para manobrar um navio mercante tipo **Panamax** atracado num cais, usando cabos HMPE dinâmicos com física de mola amortecida.
+O **WT-SIM** é um simulador realista escalável (Web-Native, sem servidores dedicados) construído para treino na área de manobras de navios mercantes de classe **Panamax** com dois rebocadores azimutais tracionadores (ASD).  
+Anteriormente alojado em Monolith (`winchsim.html`), transitou para uma **Arquitetura ES6 Dinâmica** em `/src`, proporcionando uma separação em domínios lógicos (Estado, UI, Renderização Gráfica, e Física Integradora Euclidiana).
 
 ---
 
-## ✨ Funcionalidades
+## ✨ Funcionalidades Avançadas
 
 ### 🛥️ Rebocadores Azimutais (ASD)
-- **Frota de 2 rebocadores** — Popa (vermelho) e Proa (verde)
-- **HMI Twin Joystick** — Dial direcional + Slider de RPM por thruster (BB/BE)
-- **Twin Mode** — Sincronização dos dois azimutes
-- **Física vetorial completa** — Thrust, arrasto, inércia, corrente oceânica
-- **Colisões físicas** — Rebocador vs. Cais e Rebocador vs. Panamax (SAT)
+- **Operação de Dupla Frota** — Comando e alternância seamless dos rebocadores "Popa" (Vermelho) e "Proa" (Verde).
+- **Controlos HMI Industriais** — Replica comandos ASD da vida real com "Dial direcional" e "Slider de RPM" separados.
+- **Modo Twin Control** — Permite emparelhamento síncrono dos azimutes (thrusters) Bombordo/Estibordo.
 
-### ⚓ Sistema de Cabos (HMPE)
-- Cabo dinâmico com **curva Bézier quadrática** (catenary visual)
-- Física de **mola-amortecedor** (k=200, damping=400)
-- Guincho com **Caçar (Heave)** e **Arriar (Pay-out)**
-- Freio de guincho com **interlock de segurança** (tensão > 1 t)
-- **Telemetria em tempo real** — Tensão (t) e Comprimento liberado (m)
+### 🌊 Motor de Física Ambiental Rigorosa (`tugKinetics.js`)
+Ao invés de interpolações lógicas falsas, esta build conta com Equações Cinemáticas de arrasto autênticas:
+- **Deriva Aerodinâmica Quadrática ($F = \frac{1}{2}\rho V^2 A$)**: O impacto num Panamax exposto a 60 nós aplica uma carga tangível de >200T laterais e rotacionais.
+- **Corrente Marítima & Arrasto Hidrodinâmico**: Carga contrafásica sob os 14m de draft do navio conforme velocidade submersa.
+- **Binário Inercial Consistente (Torque Fixado)**: Física validada com momento polar que obedece a alavanca do rebocador face ao centro de carena ($T = R_x \cdot F_z - R_z \cdot F_x$).
 
-### 🚢 Navio Mercante Panamax
-- Modelo 3D com casco (225×32×14 m), superestrutura e luzes de navegação
-- **8 cabeços de amarração** — 4 por bordo (Bombordo/Cais e Boreste/Mar)
-- Cabeços de reboque na Proa e Popa
-- **4 espias de amarração ao cais** com física própria (lançantes + espringues)
-- Motor e Leme pilotável (Telegrafo e Rudder)
-- **Colisões físicas** com cais e rebocadores
-
-### 🌊 Ambiente e Atmosfera
-- **Vento** — Magnitude (0–60 kn) e Direção (0–359°) com biruta 3D animada
-- **Corrente Oceânica** — Magnitude e Direção com bússola HUD
-- **Nevoeiro** — Densidade variável (0–100%) com FogExp2
-- **Luzes de Navegação** — Posição, mastro, popa (rebocadores e Panamax)
-
-### 🎮 Interface (HUD)
-- **Painéis colapsáveis** — Atmosfera & Mar, Comando Panamax
-- **Zoom rápido** — Botões + / −
-- **Controlo de câmara** — OrbitControls (mouse/touch)
-- **Aviso de portrait** — Bloqueio automático em mobile vertical
+### ⚓ Interatividade do Cabo (HMPE) e Amarração
+- **Lançantes / Espringues Realistas**: O Panamax inicia atracações nos cabeços com offets de cruzamento reais (Spring lines).
+- **Drag-and-Drop / Pontos de Passagem**: Clica num cabeço do cabo e reposiciona o mesmo nos cabeços do Cais dinâmicamente. O HMPE tensiona recalculando restrições automaticamente.
+- **Guincho Mola-Amortecedor Operacional (`c & k` tunados)**: Tolerância à tração baseada no Freio, recolhimento (*Heave*), e soltura automática (*Pay-out*).
 
 ---
 
-## 🚀 Como Usar
+## 🚀 Como Usar e Rodar
 
-Não requer instalação, servidor ou build. Funciona diretamente no browser.
+Não necessita de `npm start` ou frameworks JS de SSR. Basta um servidor HTML estático ou Live Server.
 
+### Pelo Site Ao Vivo
+Aceda à ligação principal onde o **Deploy é feito pela Netlify** através deste Repositório!
+
+### Instalação Local (Desenvolvimento)
 ```bash
 # Clone o repositório
 git clone https://github.com/Jbvix/wt-sim.git
 
-# Abra o ficheiro no browser
-start wt-sim/winchsim.html
+# Corra um servidor local para que os imports ES6 operem nativamente:
+npx serve .
+# Ou na extensão Live Server (VSCode) com root no diretório inicial.
 ```
-
-> **Recomendado:** Google Chrome ou Microsoft Edge (suporte completo a WebGL e `writing-mode` em sliders).
-
----
-
-## 🎯 Controlos
-
-| Controlo | Ação |
-|---|---|
-| **Dial BB/BE** | Rotacionar azimute do thruster |
-| **Slider BB/BE** | Potência do thruster (0–100%) |
-| **Duplo clique no dial** | Zera a potência (para máquina) |
-| **Clique no guincho** | Seleciona cabo na mão |
-| **Clique no cabeço** | Liga / Solta cabo |
-| **Botão Frota** | Alterna entre rebocador Popa e Proa |
-| **Twin Mode** | Sincroniza BB e BE |
-| **Scroll / + −** | Zoom da câmara |
-| **Drag** | Rodar câmara |
+> O ponto de entrada principal é agora o **`index.html`** (o antigo `winchsim.html` já está deprecado nas iterações modulares).
 
 ---
 
-## 🏗️ Tecnologias
+## 📂 Arquitetura Modular
 
-| Tecnologia | Uso |
-|---|---|
-| [Three.js r160](https://threejs.org/) | Renderização 3D WebGL |
-| OrbitControls | Controlo de câmara interativo |
-| HTML5 / CSS3 / ES Modules | Interface e estrutura (single-file) |
-| Physics Engine (custom) | Integração Euler, SAT collision, spring-damper |
-
----
-
-## 📁 Estrutura
-
+O código encontra-se fragmentado por domínios de negócio:
 ```
 wt-sim/
-├── winchsim.html      # Aplicação completa (single-file)
-├── test_responsive.html  # Teste de layout responsivo
-├── lint.mjs / lint2.mjs  # Scripts de lint local
+├── index.html               # Shell de bootloader e UI HUD
+├── src/
+│   ├── js/
+│   │   ├── main.js          # Controller Central (Init, Loop Animation)
+│   │   ├── ui/              # Handlers de DOM e input gestual (hmi.js, controls.js)
+│   │   ├── graphics/        # Three.JS Scene Builder (sceneSetup.js, models.js)
+│   │   ├── physics/         # Colisões SAT (collision.js) e Fluidos/Integrador (tugKinetics.js)
+│   │   ├── fleet/           # Configuração de Força Naval (tugData.js)
+│   │   └── state/           # Fonte única de verdade (globals.js)
+├── netlify.toml             # Target point Netlify (root point)
 └── README.md
 ```
+
+---
+
+## 🎯 Controlos e HUD
+
+| Ferramenta / Ícone         | Ação |
+|-----------------------------|---|
+| **Dial BB/BE**                | Rotacionar o azimute correspondente a cada Thruster (telemotor). |
+| **Slider BB/BE**              | Ajustar Potência em RPM (1–100%). |
+| **Duplo Clique c/ Rato**     | Zera a máquina automaticamente numa manobra crítica. |
+| **Guincho de Rebocador**      | (Na view HUD), permite Heave e travagem pesada. |
+| **Click num Cabeço Livre**   | Transporta a amarra na linha visível, travando a força elástica imediatamente caso o Navio exceda o limite inercial. |
 
 ---
 
 ## 👤 Autor
 
 **Jossian Brito**  
-Oficial de Náutica | Desenvolvimento de Simuladores Marítimos  
-[GitHub @Jbvix](https://github.com/Jbvix)
+*Oficial de Náutica e Arquiteto de Software Marítimo*  
+[Perfil Github e Repositório](https://github.com/Jbvix)
 
 ---
 
 ## 📄 Licença
 
-MIT — livre para uso educacional e profissional.
+Uso Livre e Orientado ao Estudo de Simuladores Avançados (Licença MIT).

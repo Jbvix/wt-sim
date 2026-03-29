@@ -1,0 +1,2045 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <!-- Prioridade Mobile-First: Garante que a escala não é alterada em dispositivos móveis -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Simulador de Guincho - Rebocador Azimutal</title>
+    <style>
+        /* * ==========================================
+         * [DIRETÓRIO LÓGICO: /css/style.css]
+         * ==========================================
+         * Autor: Jossian Brito
+         * Data: 27 de Março de 2026, 19:50 -03
+         * Versão: 1.0.0 (Etapa 1 - Fundação UI)
+         * ==========================================
+         */
+
+        /* Reset e Variáveis de Tema */
+        :root {
+            --ui-bg: rgba(15, 23, 42, 0.8); /* Fundo escuro translúcido */
+            --text-color: #f8fafc;
+            --accent-color: #38bdf8;
+            --danger-color: #ef4444;
+            --safe-color: #22c55e;
+            --border-radius: 8px;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Impede scroll na página toda */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #000;
+        }
+
+        /* Container do Canvas 3D (Background) */
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Camada da Interface de Utilizador (Overlay HUD) */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none; /* Permite que cliques passem para o 3D onde não há UI */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Painéis Interativos - Reativam os eventos de ponteiro */
+        .panel {
+            pointer-events: auto;
+            background: var(--ui-bg);
+            color: var(--text-color);
+            padding: 10px;
+            border-radius: var(--border-radius);
+            backdrop-filter: blur(4px); /* Efeito de vidro */
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Topo: Informações de Telemetria */
+        #header-telemetry {
+            margin: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .telemetry-data {
+            text-align: center;
+            flex: 1;
+        }
+
+        .telemetry-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--safe-color); /* Inicia verde (Seguro) */
+            font-family: monospace;
+        }
+
+        .telemetry-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+
+        /* Rodapé: Controlos (Mobile-First: perto dos polegares) */
+        #footer-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin: 10px;
+            padding-bottom: 20px; /* Margem extra para iOS home bar */
+        }
+
+        /* * ==========================================
+         * [NOVO - Etapa 3.2] HUD de Telemetria e Twin Control
+         * ========================================== */
+        .joystick-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* [NOVO - Etapa 5] Grupo de Controlo Desmembrado (Dial + Slider) */
+        .control-group {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* [ATUALIZADO] Slider Vertical de RPM — Padrão W3C (writing-mode) */
+        .rpm-slider {
+            writing-mode: vertical-lr;
+            direction: rtl; /* Inverte para que 100% fique em cima (Avante) */
+            width: 25px;
+            height: 90px;
+            cursor: pointer;
+            accent-color: var(--accent-color);
+            pointer-events: auto;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(255,255,255,0.15);
+            border-radius: 12px;
+            outline: none;
+        }
+
+        /* Thumb do slider (polegar) — compatibilidade cross-browser */
+        .rpm-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            background: var(--text-color);
+            border-radius: 50%;
+            border: 2px solid var(--accent-color);
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        .rpm-slider::-moz-range-thumb {
+            width: 25px;
+            height: 25px;
+            background: var(--text-color);
+            border-radius: 50%;
+            border: 2px solid var(--accent-color);
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        .telemetry-hud {
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: var(--accent-color);
+            background: rgba(0, 0, 0, 0.6);
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            white-space: nowrap;
+        }
+
+        .joystick-ghost {
+            opacity: 0.5;
+            pointer-events: none !important;
+            filter: grayscale(100%);
+        }
+
+        .btn-toggle-active {
+            background: var(--safe-color) !important;
+            color: #000 !important;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .btn-disconnect {
+            background: var(--danger-color);
+            display: none; /* Apenas visível quando conectado */
+        }
+
+        /* * ==========================================
+         * [NOVO - Etapa 2] Estilos dos Joysticks Virtuais
+         * ========================================== */
+        .joystick-base {
+            width: 90px; /* [ATUALIZADO - Etapa 5] Reduzido para caber no mobile com o slider */
+            height: 90px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(56, 189, 248, 0.5); /* Cor de sotaque */
+            position: relative;
+            touch-action: none; /* Crucial: impede scroll/refresh nativo do telemóvel ao arrastar */
+            user-select: none;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .joystick-stick {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            pointer-events: none; /* Deixa os eventos passarem para a base */
+            transition: transform 0.1s ease-out; /* Retorno suave ao centro */
+        }
+
+        /* Painel do Guincho (Centro Inferior) */
+        #winch-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .winch-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            text-transform: uppercase;
+            touch-action: none; /* Mobile-First: Evita menu de contexto ao segurar */
+            user-select: none;
+        }
+
+        .winch-btn:active {
+            background: var(--accent-color);
+        }
+
+        .btn-brake {
+            background: var(--danger-color);
+        }
+
+        /* * ==========================================
+         * [NOVO - Etapa 3] Mensagens de Estado (HUD)
+         * ========================================== */
+        #status-message {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(234, 179, 8, 0.9); /* Amarelo aviso */
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: none; /* Oculto por defeito */
+            pointer-events: none;
+            z-index: 20;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        /* * ==========================================
+         * [NOVO - Etapa 8] Mobile-First Responsivity
+         * ========================================== */
+        #portrait-warning {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #000;
+            color: white;
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        #portrait-warning svg {
+            width: 80px; height: 80px; margin-bottom: 20px;
+            animation: tilt 2s infinite ease-in-out;
+            fill: none;
+            stroke: var(--accent-color);
+            stroke-width: 2;
+        }
+
+        @keyframes tilt {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(90deg); }
+        }
+
+        /* Bloqueio de Portrait em dispositivos móveis */
+        @media screen and (max-width: 900px) and (orientation: portrait) {
+            #portrait-warning {
+                display: flex;
+            }
+        }
+
+        /* Otimização em dispositivos móveis deitados (Landscape) */
+        @media screen and (max-width: 950px) and (orientation: landscape) {
+            #camera-controls {
+                top: 20px !important;
+                right: auto !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                flex-direction: row !important;
+                gap: 20px !important;
+            }
+            #camera-controls .winch-btn {
+                width: 45px !important; height: 45px !important;
+            }
+            #weather-panel {
+                top: 80px !important;
+                width: 190px !important;
+            }
+            #status-message {
+                top: 70px !important;
+            }
+            .joystick-base {
+                width: 80px !important; height: 80px !important;
+            }
+            .rpm-slider {
+                height: 80px !important;
+                width: 22px !important;
+            }
+            .winch-btn {
+                padding: 6px 10px !important;
+                font-size: 0.8rem !important;
+            }
+            #footer-controls {
+                margin-bottom: 0px !important;
+                padding-bottom: 10px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- [NOVO - Etapa 8] Aviso Vertical / Bloqueio de Portrait -->
+    <div id="portrait-warning">
+        <svg viewBox="0 0 24 24"><path d="M16 4h4v16h-4M8 20H4V4h4"/><path d="M12 8v8"/><path d="M9 11l3-3 3 3"/></svg>
+        <h2 style="font-family: inherit;">Rode o Dispositivo</h2>
+        <p style="font-family: inherit; font-size: 0.9rem; max-width: 80%; opacity: 0.8;">Os controlos Azimutais (Twin Joystick) exigem que jogue em modo Paisagem (na horizontal) para alcance dos seus polegares.</p>
+    </div>
+
+    <!-- Container Renderizador 3D -->
+    <div id="canvas-container"></div>
+
+    <!-- Interface (HUD) -->
+    <div id="error-log" style="display:none; position:absolute; z-index:9999; top: 10px; left: 10px; color: white; background: red; padding: 10px;"></div>
+    <div id="ui-layer">
+        
+        <!-- Topo: Telemetria -->
+        <div id="header-telemetry" class="panel">
+            <div class="telemetry-data">
+                <div class="telemetry-value" id="ui-tension">0.0 t</div>
+                <div class="telemetry-label">Tensão do Cabo</div>
+            </div>
+            
+            <!-- [NOVO - Adição UI Bússola de Corrente] -->
+            <div class="telemetry-data" style="display: flex; flex-direction: column; align-items: center; min-width: 80px;">
+                <div id="ui-current-compass" style="width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--accent-color); position: relative; margin-bottom: 2px; opacity: 0.2; transition: opacity 0.3s;">
+                    <!-- Seta apontando para o Cima (Norte/0 graus nativo do ecrã) -->
+                    <div id="ui-current-arrow" style="position: absolute; width: 4px; height: 16px; background: var(--accent-color); top: 50%; left: 50%; transform-origin: center bottom; transform: translate(-50%, -100%) rotate(0deg);">
+                        <!-- Cabeca da Seta -->
+                        <div style="position: absolute; top: -4px; left: -3px; width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 6px solid var(--accent-color);"></div>
+                    </div>
+                </div>
+                <div class="telemetry-label" style="font-size: 0.6rem;">Deriva Oceânica</div>
+            </div>
+
+            <div class="telemetry-data">
+                <div class="telemetry-value" style="color: var(--accent-color);" id="ui-length">10.0 m</div>
+                <div class="telemetry-label">Cabo Liberado</div>
+            </div>
+        </div>
+
+        <!-- Botões de Zoom Rápidos da Câmara -->
+        <div id="camera-controls" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 15px; z-index: 20; pointer-events: auto;">
+            <button class="winch-btn" id="btn-zoom-in" style="width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.8);">+</button>
+            <button class="winch-btn" id="btn-zoom-out" style="width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.8);">-</button>
+        </div>
+
+        <!-- [NOVO - Etapa 7] Painel Meteorológico e Marés -->
+        <div id="weather-panel" class="panel" style="position: absolute; left: 20px; top: 120px; display: flex; flex-direction: column; width: 220px; font-size: 0.8rem; pointer-events: auto;">
+            <div style="font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 5px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+                <span id="btn-toggle-weather" style="cursor: pointer; padding: 5px 0;">▼ Atmosfera & Mar</span>
+                <span id="ui-lights" style="cursor: pointer; color: var(--accent-color);">[ Luzes ]</span>
+            </div>
+            
+            <div id="weather-content" style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between;"><span>Vento (Mag): <span id="val-wind-mag">0</span> kn</span></div>
+                <input type="range" id="sl-wind-mag" min="0" max="60" value="0">
+                
+                <div style="display: flex; justify-content: space-between;"><span>Vento (Dir): <span id="val-wind-dir">0</span>°</span></div>
+                <input type="range" id="sl-wind-dir" min="0" max="359" value="0">
+                
+                <div style="display: flex; justify-content: space-between;"><span>Corrente (Mag): <span id="val-cur-mag">0</span> kn</span></div>
+                <input type="range" id="sl-cur-mag" min="0" max="3" step="0.1" value="0">
+                
+                <div style="display: flex; justify-content: space-between;"><span>Corrente (Dir): <span id="val-cur-dir">0</span>°</span></div>
+                <input type="range" id="sl-cur-dir" min="0" max="359" value="0">
+                
+                <div style="display: flex; justify-content: space-between;"><span>Nevoeiro: <span id="val-fog">0</span>%</span></div>
+                <input type="range" id="sl-fog" min="0" max="100" value="0">
+            </div>
+        </div>
+
+        <!-- [NOVO - Etapa 10] Comando do Navio Mercante & Amarrações -->
+        <div id="ship-panel" class="panel" style="position: absolute; right: 20px; top: 120px; display: flex; flex-direction: column; width: 220px; font-size: 0.8rem; pointer-events: auto;">
+            <div style="font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 5px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+                <span id="btn-toggle-ship" style="cursor: pointer; padding: 5px 0;">▼ Comando Panamax</span>
+                <span style="color: var(--danger-color);">[ SHIP ]</span>
+            </div>
+            
+            <div id="ship-content" style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between;"><span>Motor (Telegrafo): <span id="val-ship-engine">0</span>%</span></div>
+                <input type="range" id="sl-ship-engine" min="-100" max="100" value="0">
+                <button class="winch-btn" id="btn-ship-stop" style="padding: 2px 5px; font-size: 0.7rem;">PARAR MÁQUINA</button>
+
+                <div style="display: flex; justify-content: space-between; margin-top: 5px;"><span>Leme (Rudder): <span id="val-ship-rudder">0</span>°</span></div>
+                <input type="range" id="sl-ship-rudder" min="-35" max="35" value="0">
+                <button class="winch-btn" id="btn-ship-midships" style="padding: 2px 5px; font-size: 0.7rem;">A MEIO (0°)</button>
+            </div>
+        </div>
+
+        <div id="status-message">Selecione o Cabeço no Cais</div>
+
+        <!-- Rodapé: Controlos -->
+        <!-- [NOVO - Etapa 10] Botão do Gestor de Frota (centrado, acima do painel do guincho) -->
+        <div style="position: absolute; left: 50%; bottom: 220px; transform: translateX(-50%); z-index: 20; display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: auto;">
+            <div class="telemetry-label" style="text-shadow: 1px 1px 2px #000;">Rebocador Ativo</div>
+            <button class="winch-btn" id="btn-switch-tug" style="background-color: var(--danger-color); padding: 8px 18px; font-weight: bold; border: 2px solid white; white-space: nowrap;">[ POPA ] - VERMELHO</button>
+        </div>
+
+        <div id="footer-controls">
+            <!-- Joystick Bombordo (BB) -->
+            <div class="joystick-wrapper">
+                <div class="telemetry-hud" id="hud-bb">BB | 000% | 000°</div>
+                <div class="control-group">
+                    <input type="range" min="0" max="100" value="0" class="rpm-slider" id="slider-bb">
+                    <div id="joystick-bb" class="joystick-base panel">
+                        <div class="joystick-stick" id="stick-bb"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Painel do Guincho -->
+            <div id="winch-panel" class="panel">
+                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-bottom: 5px;">
+                    <div class="telemetry-label">Guincho / Leme</div>
+                    <button class="winch-btn" id="btn-twin" style="width: auto; padding: 2px 8px; font-size: 0.7rem;">Twin Mode</button>
+                </div>
+                <button class="winch-btn btn-disconnect" id="btn-disconnect">Desconectar</button>
+                <button class="winch-btn" id="btn-heave">▲ Caçar (Heave)</button>
+                <button class="winch-btn btn-brake btn-toggle-active" id="btn-brake">Freio: Travado</button>
+                <button class="winch-btn" id="btn-pay">▼ Arriar (Pay)</button>
+            </div>
+
+            <!-- Joystick Estibordo (BE) -->
+            <div class="joystick-wrapper">
+                <div class="telemetry-hud" id="hud-be">BE | 000% | 000°</div>
+                <div class="control-group">
+                    <div id="joystick-be" class="joystick-base panel">
+                        <div class="joystick-stick" id="stick-be"></div>
+                    </div>
+                    <input type="range" min="0" max="100" value="0" class="rpm-slider" id="slider-be">
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ImportMap do Three.js para resolução de módulos no navegador -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <!-- Script Principal -->
+    <script type="module">
+        /*
+         * ==========================================
+         * [DIRETÓRIO LÓGICO: Principal e Módulos JS]
+         * ==========================================
+         * Autor: Jossian Brito
+         * Data: 27 de Março de 2026, 21:39 -03
+         * Versão: 1.6.1 (Etapa 5.1 - Hotfix HMI de Propulsão)
+         * Modificações: 
+         * - Correção do bug de inércia da manete: Adicionado 'pointer-events: auto' à classe .rpm-slider.
+         * - Otimização UI/UX Mobile-First: Aumento da largura do slider e personalização do 
+         * '::-webkit-slider-thumb' para facilitar o manuseamento em ecrãs táteis.
+         * ==========================================
+         */
+
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // ==========================================
+        // 1. [core/globals.js] Variáveis Globais
+        // ==========================================
+        const container = document.getElementById('canvas-container');
+        let scene, camera, renderer, controls;
+        
+        // Referências para os objetos 3D (Substituídas por ponteiros ativos)
+        let tugboat, winchDrum, ropeLine, jetArrowBB, jetArrowBE, resultantArrow;
+        let pier, bollard;
+        let merchantShip; // [NOVO - Etapa 4] Navio Mercante
+        
+        // [NOVO - Etapa 9] Sinais Atmosféricos (Biruta e Corrente)
+        let windsockFabric;
+        let uiCurrentCompass, uiCurrentArrow;
+
+        // [NOVO - Etapa 3] Hitboxes
+        let hitboxes = [];
+
+        // Variáveis de Tempo (Delta Time)
+        let lastTime = 0;
+
+        // [NOVO] Estrutura Multi-Rebocador (Frota)
+        const createTugData = () => ({
+            state: {
+                position: new THREE.Vector2(0, 0), // Atualizado no init
+                velocity: new THREE.Vector2(0, 0),
+                heading: Math.PI / 2,  // Guincho (proa/+X local) virado para o navio (-Z mundo)
+                angularVelocity: 0,
+                mass: 400, // [ATUALIZADO] 500 para 400 Toneladas (Mais ágil)
+                inertia: 50000 
+            },
+            thrusters: {
+                bb: { thrust: 0, angle: 0, pos: { x: -14, z: -4 } }, // Bombordo (Popa)
+                be: { thrust: 0, angle: 0, pos: { x: -14, z: 4 } }   // Estibordo (Popa)
+            },
+            rope: {
+                status: 0, // 0: Solto, 1: Na Mão, 2: Conectado
+                lengthL0: 10.0, // Comprimento frouxo (m)
+                tension: 0, // Tensão atual (t)
+                k: 200, // Constante elástica
+                damping: 400, // Amortecimento
+                winchAction: 0, // 1: Heave, -1: Pay, 0: Inativo
+                brakeEngaged: true,
+                winchSpeed: 2.0,
+                connectedBollard: null
+            },
+            meshes: {}
+        });
+
+        const tugs = {
+            stern: { ...createTugData(), id: 'stern', color: 0xcc0000, startPos: new THREE.Vector2(-110, 45) }, // Alinhado c/ cabeço de reboque popa
+            bow:   { ...createTugData(), id: 'bow',   color: 0x00cc00, startPos: new THREE.Vector2( 105, 45) }  // Alinhado c/ cabeço de reboque proa
+        };
+
+        // Ponteiros de Estado do Rebocador Ativo (Para a UI)
+        let activeTugId = 'stern';
+        let tugState, thrusters, ropeState;
+
+        // [NOVO - Etapa 4] Estado Físico do Navio Mercante
+        const shipState = {
+            position: new THREE.Vector2(0, 11), // Panamax Largo posicionado perfeitamente rente ao cais
+            velocity: new THREE.Vector2(0, 0),
+            heading: 0,
+            angularVelocity: 0,
+            // [ATUALIZADO] Scale Down para Gamification
+            mass: 5000, // Toneladas simuladas
+            inertia: 20000000, // Inércia proporcional escalada
+            // [NOVO - Etapa 10] Pilotagem Ativa do Dead-Ship
+            engineThrust: 0, // % de -100 a +100
+            rudderAngle: 0 // graus de -35 a +35 (positivo é BB)
+        };
+
+        // [NOVO - Etapa 3.2] Estado de Navegação Global
+        let isTwinControl = false;
+
+        // [NOVO - Etapa 10] Linhas de Amarração do Navio ao Cais (Mooring System)
+        const pierBollards = []; // Registará todos os meshes fixos do cais
+        const mooringLines = [
+            { id: 'bow-head',   type: 'Lançante Proa', shipRef: null, pierRef: null, lengthL0: 0, tension: 0, active: false, ropeLine: null, color: 0xffaa00 },
+            { id: 'bow-spring', type: 'Espringue Proa', shipRef: null, pierRef: null, lengthL0: 0, tension: 0, active: false, ropeLine: null, color: 0x00ffaa },
+            { id: 'stern-spring', type: 'Espringue Popa', shipRef: null, pierRef: null, lengthL0: 0, tension: 0, active: false, ropeLine: null, color: 0x00aaff },
+            { id: 'stern-head', type: 'Lançante Popa',    shipRef: null, pierRef: null, lengthL0: 0, tension: 0, active: false, ropeLine: null, color: 0xff00aa }
+        ];
+
+        // [NOVO - Etapa 3] Raycaster
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        const pointerDownPos = new THREE.Vector2();
+
+        // [NOVO - Etapa 7] Estado Meteorológico
+        const envState = {
+            windMag: 0, // knots
+            windDir: 0, // graus náuticos globais
+            currentMag: 0, // knots
+            currentDir: 0, // graus náuticos globais
+            fogDensity: 0, // percentagem
+            lightsOn: false
+        };
+
+        // Arrays para as luzes locais
+        const navLights = [];
+        let ambientLight;
+
+        // ==========================================
+        // 2. [core/main.js] Inicialização e Loop
+        // ==========================================
+        function init() {
+            console.error('DEBUG: INIT INICIOU');
+            setupGraphics();
+            buildWorld();
+            setupJoysticks();
+            setupWinchPanel(); // [NOVO] Liga botões do guincho
+            setupShipPanel(); // [NOVO - Etapa 10] Liga painel do Panamax
+            setupEnvironmentPanel(); // [NOVO - Etapa 7]
+            setupFleetManager(); // [NOVO] Painel do comutador de frota
+            setupEventListeners();
+            
+            // Gravar IDs da UI
+            uiCurrentCompass = document.getElementById('ui-current-compass');
+            uiCurrentArrow = document.getElementById('ui-current-arrow');
+
+            // Inicia ponteiros nativos de estado
+            activeTugId = 'stern';
+            switchTug('stern');
+
+            setupDockedScenario(); // [STARTUP] Inicializa atracado
+            console.error('DEBUG: INIT TERMINOU');
+            requestAnimationFrame(animate);
+        }
+
+        // [NOVO] Alterna Controlo da Frota
+        function switchTug(id) {
+            activeTugId = id;
+            const t = tugs[id];
+            
+            // Refaz apontadores globais
+            tugState = t.state;
+            thrusters = t.thrusters;
+            ropeState = t.rope;
+            tugboat = t.meshes.tugboat;
+            winchDrum = t.meshes.winchDrum;
+            ropeLine = t.meshes.ropeLine;
+            jetArrowBB = t.meshes.jetArrowBB;
+            jetArrowBE = t.meshes.jetArrowBE;
+            resultantArrow = t.meshes.resultantArrow;
+
+            // Encerra GUI Antiga se não existir botões
+            const btnSwitch = document.getElementById('btn-switch-tug');
+            if (btnSwitch) {
+                if (id === 'stern') {
+                    btnSwitch.style.backgroundColor = 'var(--danger-color)';
+                    btnSwitch.innerText = '[ POPA ] - VERMELHO';
+                } else {
+                    btnSwitch.style.backgroundColor = 'var(--safe-color)';
+                    btnSwitch.innerText = '[ PROA ] - VERDE';
+                    btnSwitch.style.color = '#000'; // Contraste
+                }
+            }
+
+            // [CRÍTICO] Atualizar Manípulos UI instantaneamente para os valores em cache deste tugboat
+            ['bb', 'be'].forEach(side => {
+                const slider = document.getElementById(`slider-${side}`);
+                const stick = document.getElementById(`stick-${side}`);
+                if (!slider || !stick) return;
+
+                // Restaura Motor
+                slider.value = thrusters[side].thrust * 100;
+                
+                // Restaura Azimute Visual (Stick)
+                const ang = thrusters[side].angle;
+                // Raio visual do dial
+                const handleLimit = 25; // 60/2 - 10
+                const x = handleLimit * Math.cos(ang);
+                const y = handleLimit * Math.sin(ang);
+                stick.style.transform = `translate(${x}px, ${y}px)`;
+            });
+            
+            // Restaura Twin Mode se ambos os azimutes forem estritamente o BE (Cópia)
+            // Caso contrário, desliga-o.
+            const btnTwin = document.getElementById('btn-twin');
+            const joystickBE = document.getElementById('joystick-be');
+            const sliderBE = document.getElementById('slider-be');
+            if (thrusters.bb.angle === thrusters.be.angle && thrusters.bb.thrust === thrusters.be.thrust && thrusters.bb.thrust !== 0) {
+               // Pode ser Twin, mantemos o estado. Mas na dúvida, desliga para prevenir saltos perigosos.
+            }
+            if (isTwinControl && btnTwin) {
+                // Ao trocar de barco quebra o Twin Control por segurança
+                isTwinControl = false;
+                btnTwin.classList.remove('btn-toggle-active');
+                joystickBE.classList.remove('joystick-ghost');
+                sliderBE.classList.remove('joystick-ghost');
+            }
+
+            // Atualiza botões do guincho
+            const btnBrake = document.getElementById('btn-brake');
+            if (btnBrake) {
+                if (ropeState.brakeEngaged) {
+                    btnBrake.classList.add('btn-toggle-active');
+                    btnBrake.innerText = "Freio: Travado";
+                } else {
+                    btnBrake.classList.remove('btn-toggle-active');
+                    btnBrake.innerText = "Freio: Solto";
+                }
+            }
+        }
+
+        // Liga Evento de UI
+        function setupFleetManager() {
+            const btnSwitch = document.getElementById('btn-switch-tug');
+            btnSwitch.addEventListener('click', () => {
+                const newId = activeTugId === 'stern' ? 'bow' : 'stern';
+                switchTug(newId);
+            });
+        }
+
+        // [STARTUP ROUTINE] Inicia navio atracado com cabos de amarração
+        function setupDockedScenario() {
+            document.getElementById('status-message').innerText = "Panamax Atracado. Passe a Espia do Rebocador.";
+            document.getElementById('status-message').style.display = 'block';
+
+            // [CRÍTICO] Sincronizar Iniciais
+            if (merchantShip) {
+                merchantShip.position.set(shipState.position.x, 0, shipState.position.y);
+                merchantShip.rotation.y = shipState.heading;
+                merchantShip.updateMatrixWorld(true);
+            }
+
+            Object.values(tugs).forEach(tug => {
+                // Atualiza o State Físico pelo pre-set (Evita "Math Explosions" de spawn_kill no 0,0)
+                tug.state.position.copy(tug.startPos);
+                
+                if (tug.meshes && tug.meshes.tugboat) {
+                    tug.meshes.tugboat.position.set(tug.state.position.x, 0, tug.state.position.y);
+                    tug.meshes.tugboat.rotation.y = tug.state.heading;
+                    tug.meshes.tugboat.updateMatrixWorld(true);
+                }
+            });
+
+            // [NOVO - Etapa 10] Liga as 4 Amarrações Iniciais do Navio ao Cais
+            // Função p/ alinhar
+            const pairMooring = (mooringId, targetPierX) => {
+                const line = mooringLines.find(m => m.id === mooringId);
+                const pBollard = pierBollards.find(p => p.x === targetPierX);
+                if (line && pBollard && line.shipRef) {
+                    line.pierRef = pBollard.ref;
+                    line.active = true;
+                    line.ropeLine.visible = true;
+                    // L0 exato da ligação
+                    const bA = new THREE.Vector3(); line.shipRef.getWorldPosition(bA);
+                    const bB = new THREE.Vector3(); line.pierRef.getWorldPosition(bB);
+                    line.lengthL0 = bA.distanceTo(bB) - 0.2; // -0.2m for tight preload
+                }
+            };
+
+            pairMooring('bow-head', 150);
+            pairMooring('bow-spring', 50);
+            pairMooring('stern-spring', -50);
+            pairMooring('stern-head', -150);
+        }
+
+        // ==========================================
+        // [Etapa 7] Ligar Painel Meteorológico
+        // ==========================================
+        function setupEnvironmentPanel() {
+            const bindSlider = (id, outId, param, parser = parseInt) => {
+                const sl = document.getElementById(id);
+                const out = document.getElementById(outId);
+                sl.addEventListener('input', (e) => {
+                    const val = parser(e.target.value);
+                    out.innerText = val;
+                    envState[param] = val;
+                    if(param === 'fogDensity') updateFog();
+                });
+            };
+
+            bindSlider('sl-wind-mag', 'val-wind-mag', 'windMag');
+            bindSlider('sl-wind-dir', 'val-wind-dir', 'windDir');
+            bindSlider('sl-cur-mag', 'val-cur-mag', 'currentMag', parseFloat);
+            bindSlider('sl-cur-dir', 'val-cur-dir', 'currentDir');
+            bindSlider('sl-fog', 'val-fog', 'fogDensity');
+
+            document.getElementById('ui-lights').addEventListener('click', () => {
+                envState.lightsOn = !envState.lightsOn;
+                document.getElementById('ui-lights').style.color = envState.lightsOn ? '#ffeb3b' : 'var(--accent-color)';
+                navLights.forEach(light => { light.intensity = envState.lightsOn ? light.userData.baseIntensity : 0; });
+            });
+
+            // Lógica do Painel Ocultável (Mobile-First)
+            const weatherBtn = document.getElementById('btn-toggle-weather');
+            const weatherContent = document.getElementById('weather-content');
+            
+            const toggleWeatherPanel = (forceClose = false) => {
+                if (weatherContent.style.display === 'none' && !forceClose) {
+                    weatherContent.style.display = 'flex';
+                    weatherBtn.innerText = '▼ Atmosfera & Mar';
+                } else {
+                    weatherContent.style.display = 'none';
+                    weatherBtn.innerText = '▶ Atmosfera & Mar';
+                }
+            };
+
+            weatherBtn.addEventListener('click', () => toggleWeatherPanel(false));
+
+            // Inicia fechado se for ecrã pequeno (Mobile-First Collapse)
+            if (window.innerWidth <= 850) {
+                toggleWeatherPanel(true);
+            }
+        }
+        
+        function updateFog() {
+            if (!scene) return;
+            const density = envState.fogDensity * 0.0002; // max ~0.02
+            scene.fog.density = density;
+            // Reduz luz ambiente para o nevoeiro parecer real:
+            if(ambientLight) ambientLight.intensity = Math.max(0.2, 0.8 - (envState.fogDensity / 100) * 0.6);
+        }
+
+        // ==========================================
+        // 3. [graphics/scene.js] Setup Three.js
+        // ==========================================
+        function setupGraphics() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xffffff);
+            
+            // [NOVO - Etapa 7] Nevoeiro Base
+            // scene.fog = new THREE.FogExp2(0x1e293b, 0); // Nevoeiro cinza-escuro/azulado da noite portuária
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 3000);
+            camera.position.set(0, 80, 20); // Vista panorâmica inicial
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true }); // Z-fighting reduzido
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Sombras suaves
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+            dirLight.position.set(200, 300, 100);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
+            dirLight.shadow.camera.near = 50;
+            dirLight.shadow.camera.far = 1000;
+            const area = 300;
+            dirLight.shadow.camera.left = -area;
+            dirLight.shadow.camera.right = area;
+            dirLight.shadow.camera.top = area;
+            dirLight.shadow.camera.bottom = -area;
+            scene.add(dirLight);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2 - 0.05; // Evita atravessar a água
+            controls.target.set(0, 0, 0); // Aponta para o centro
+            controls.minDistance = 20; // [ATUALIZADO]
+            controls.maxDistance = 1500; // [ATUALIZADO] Aumentado para ver porto e Panamax
+        }
+
+        // ==========================================
+        // 4. [graphics/models.js] Geometrias Primitivas
+        // ==========================================
+        function buildWorld() {
+            // A. O Mar (Plano Infinito)
+            const oceanGeometry = new THREE.PlaneGeometry(1000, 1000);
+            const oceanMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x006994, // Azul profundo
+                roughness: 0.1,  // Reflexivo
+                metalness: 0.1
+            });
+            const ocean = new THREE.Mesh(oceanGeometry, oceanMaterial);
+            ocean.rotation.x = -Math.PI / 2; // Roda para ficar na horizontal
+            ocean.receiveShadow = true;
+            scene.add(ocean);
+
+            // B. O Cais (Concrete Pier) Extensão Massiva
+            const pierGeometry = new THREE.BoxGeometry(400, 5, 20);
+            const pierMaterial = new THREE.MeshStandardMaterial({ color: 0x808080 }); // Cinza betão
+            pier = new THREE.Mesh(pierGeometry, pierMaterial);
+            pier.position.set(0, 2.5, -20); // Centralizado (Z = -10 face frontal)
+            pier.castShadow = true;
+            pier.receiveShadow = true;
+            scene.add(pier);
+
+            // C. Cabeços no Cais Espalhados
+            const bollardGeometry = new THREE.CylinderGeometry(0.5, 0.6, 1.5, 16);
+            const bollardMaterial = new THREE.MeshStandardMaterial({ color: 0x222222 });
+            const hitMat = new THREE.MeshBasicMaterial({ visible: false }); // Invisível
+            const bollardHitGeo = new THREE.SphereGeometry(4.5, 16, 16);
+
+            const pierBollardPositions = [-150, -100, -50, 0, 50, 100, 150]; // Ao longo do cais
+            pierBollardPositions.forEach(xPos => {
+                const b = new THREE.Mesh(bollardGeometry, bollardMaterial);
+                b.position.set(xPos, 5 + 0.75, -15);
+                b.castShadow = true;
+                scene.add(b);
+                pierBollards.push({ x: xPos, ref: b }); // [NOVO - Etapa 10]
+
+                const bHit = new THREE.Mesh(bollardHitGeo, hitMat);
+                bHit.position.copy(b.position);
+                bHit.userData = { type: 'bollard', ref: b, isDynamic: false };
+                scene.add(bHit);
+                hitboxes.push(bHit);
+            });
+
+            // [NOVO - Etapa 9] Biruta de Vento (Windsock) no Cais
+            const windsockGroup = new THREE.Group();
+            windsockGroup.position.set(50, 5, -20); // Na borda do cais
+            
+            // Poste Metálico
+            const poleGeo = new THREE.CylinderGeometry(0.2, 0.2, 10, 8);
+            const poleMat = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
+            const pole = new THREE.Mesh(poleGeo, poleMat);
+            pole.position.y = 5;
+            pole.castShadow = true;
+            windsockGroup.add(pole);
+
+            // Pivot Rotativo do Tecido (Fabric Base)
+            windsockFabric = new THREE.Group();
+            windsockFabric.position.set(0, 10, 0); // Topo do poste
+
+            // O Tecido Cone
+            const sockGeo = new THREE.CylinderGeometry(0.8, 0.3, 5, 16, 1, true); // Cone oco
+            // Deslocar o centro de massa da geometria para o aro aberto (origem geométrica)
+            sockGeo.translate(0, -2.5, 0);
+            // Rodar para ficar paralelo ao chão, ao longo do Z+ (assumimos que Z+ é vento Sul)
+            // Cuidado: ThreeJS rotate muda os vértices locais. Z = 0 é virado para X+.
+            // Como Vento Dir 0 é eixo X+, rotacionamos no Z
+            sockGeo.rotateZ(Math.PI / 2);
+            
+            const sockMat = new THREE.MeshStandardMaterial({ color: 0xff4500, side: THREE.DoubleSide }); // Laranja/Aeronáutico
+            const sock = new THREE.Mesh(sockGeo, sockMat);
+            sock.castShadow = true;
+            
+            windsockFabric.add(sock);
+            windsockGroup.add(windsockFabric);
+            scene.add(windsockGroup);
+
+            // [NOVO - Etapa 7] Função auxiliar para iluminar navios
+            function createNavLight(parent, color, x, y, z, reach = 100) {
+                const light = new THREE.PointLight(color, 0, reach);
+                light.userData.baseIntensity = 3.0; // Intensidade quando ligada
+                light.position.set(x, y, z);
+                
+                // Representação visual da lâmpada
+                const bulbGeo = new THREE.SphereGeometry(0.8, 8, 8);
+                const bulbMat = new THREE.MeshBasicMaterial({ color: color });
+                const bulb = new THREE.Mesh(bulbGeo, bulbMat);
+                light.add(bulb);
+                
+                parent.add(light);
+                navLights.push(light);
+            }
+
+            // [NOVO - Etapa 4] E. O Navio Mercante (Dead Ship Panamax)
+            merchantShip = new THREE.Group();
+            
+            // Casco do Navio (Panamax: 225m C, 14m A, 32m L)
+            const shipHullGeo = new THREE.BoxGeometry(225, 14, 32);
+            const shipHullMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a }); // Azul escuro
+            const shipHull = new THREE.Mesh(shipHullGeo, shipHullMat);
+            shipHull.position.y = 7; // Flutua na água (altura / 2)
+            shipHull.castShadow = true;
+            merchantShip.add(shipHull);
+
+            // Cabine do Navio (Superstrutura Múltipla)
+            const shipCabinGeo = new THREE.BoxGeometry(32, 12, 20); // Largura reduzida: 20m (casco=32m) → cabeços em z=-14 ficam expostos
+            const shipCabinMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+            const shipCabin = new THREE.Mesh(shipCabinGeo, shipCabinMat);
+            shipCabin.position.set(-90, 14 + 5, 0); // Deslocada para trás na popa
+            shipCabin.castShadow = true;
+            merchantShip.add(shipCabin);
+
+            // 4x Cabeços BB (Bombordo/Cais) + 4x Cabeços BE (Boreste/Mar)
+            const mooringPositions = [
+                // --- Bombordo (BB) — Costado do Cais ---
+                { id: 'bow-head',       xPos:  105, zPos: -14, type: 'mooring' }, // Lançante Proa BB
+                { id: 'bow-spring',     xPos:   80, zPos: -14, type: 'mooring' }, // Espringue Proa BB
+                { id: 'stern-spring',   xPos:  -80, zPos: -14, type: 'mooring' }, // Espringue Popa BB
+                { id: 'stern-head',     xPos: -105, zPos: -14, type: 'mooring' }, // Lançante Popa BB
+                // --- Boreste (BE) — Costado do Mar ---
+                { id: 'bow-head-be',    xPos:  105, zPos: +14, type: 'bollard' }, // Lançante Proa BE
+                { id: 'bow-spring-be',  xPos:   80, zPos: +14, type: 'bollard' }, // Espringue Proa BE
+                { id: 'stern-spring-be',xPos:  -80, zPos: +14, type: 'bollard' }, // Espringue Popa BE
+                { id: 'stern-head-be',  xPos: -105, zPos: +14, type: 'bollard' }, // Lançante Popa BE
+            ];
+            mooringPositions.forEach(m => {
+                const b = new THREE.Mesh(bollardGeometry, bollardMaterial);
+                b.position.set(m.xPos, 14 + 0.75, m.zPos);
+                b.castShadow = true;
+                b.userData = { isDynamic: true };
+                merchantShip.add(b);
+
+                const bHit = new THREE.Mesh(bollardHitGeo, hitMat);
+                bHit.position.copy(b.position);
+                bHit.userData = { type: m.type, ref: b, isDynamic: true, mooringId: m.id }; // mooringId vital para mecânica de largar
+                merchantShip.add(bHit);
+                hitboxes.push(bHit);
+                
+                // Liga ao fyziké (apenas BB tem linha ao cais)
+                const mooringLineData = mooringLines.find(l => l.id === m.id);
+                if (mooringLineData) mooringLineData.shipRef = b;
+            });
+
+            // [NOVO] Cabeços de Reboque (Towing Bollards) - Centro da Popa e Proa
+            const towingBollardStern = new THREE.Mesh(bollardGeometry, bollardMaterial);
+            towingBollardStern.position.set(-110, 14 + 0.75, 0); // Cabeço de Reboque Popa (dentro do casco — casco vai até -112.5)
+            towingBollardStern.castShadow = true;
+            towingBollardStern.userData = { isDynamic: true };
+            merchantShip.add(towingBollardStern);
+
+            const towingHitStern = new THREE.Mesh(bollardHitGeo, hitMat);
+            towingHitStern.position.copy(towingBollardStern.position);
+            towingHitStern.userData = { type: 'bollard', ref: towingBollardStern, isDynamic: true };
+            merchantShip.add(towingHitStern);
+            hitboxes.push(towingHitStern);
+
+            const towingBollardBow = new THREE.Mesh(bollardGeometry, bollardMaterial);
+            towingBollardBow.position.set(105, 14 + 0.75, 0); // Centro extremo da Proa
+            towingBollardBow.castShadow = true;
+            towingBollardBow.userData = { isDynamic: true };
+            merchantShip.add(towingBollardBow);
+
+            const towingHitBow = new THREE.Mesh(bollardHitGeo, hitMat);
+            towingHitBow.position.copy(towingBollardBow.position);
+            towingHitBow.userData = { type: 'bollard', ref: towingBollardBow, isDynamic: true };
+            merchantShip.add(towingHitBow);
+            hitboxes.push(towingHitBow);
+
+            // [NOVO - Etapa 7] Luzes do Panamax
+            createNavLight(merchantShip, 0xff0000, -85, 20, -16.5, 400); // Bombordo (BB)
+            createNavLight(merchantShip, 0x00ff00, -85, 20, 16.5, 400);  // Estibordo (BE)
+            createNavLight(merchantShip, 0xffffff, -70, 26, 0, 800);     // Masthead (Mastro)
+            createNavLight(merchantShip, 0xffffff, -112.5, 10, 0, 400);  // Popa
+
+            // Posiciona navio na cena baseando-se no shipState inicial
+            merchantShip.position.set(shipState.position.x, 0, shipState.position.y);
+            scene.add(merchantShip);
+
+            // [NOVO - Etapa 10] D. Geração da Frota de Rebocadores (Factory)
+            function createTugboatMesh(tugId, colorHex) {
+                const group = new THREE.Group();
+                const meshes = {}; // Guarda refêrencias locais
+                
+                // D.1 Casco (32x12)
+                const hullGeometry = new THREE.BoxGeometry(32, 6, 12);
+                const hullMaterial = new THREE.MeshStandardMaterial({ color: colorHex }); 
+                const hull = new THREE.Mesh(hullGeometry, hullMaterial);
+                hull.position.y = 3; 
+                hull.castShadow = true;
+                group.add(hull);
+                meshes.hull = hull;
+
+                // D.2 Superstrutura (Cabine)
+                const cabinGeometry = new THREE.BoxGeometry(10, 6, 8);
+                const cabinMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff }); // Branco
+                const cabin = new THREE.Mesh(cabinGeometry, cabinMaterial);
+                cabin.position.set(-5, 6 + 3, 0); 
+                cabin.castShadow = true;
+                group.add(cabin);
+                meshes.cabin = cabin;
+
+                // D.3 Guincho de Proa (Winch)
+                const winchBaseGeo = new THREE.BoxGeometry(3, 1.5, 4);
+                const winchMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
+                const winchBase = new THREE.Mesh(winchBaseGeo, winchMat);
+                winchBase.position.set(12, 6 + 0.75, 0);
+                winchBase.castShadow = true;
+                group.add(winchBase);
+
+                // Tambor do Guincho
+                const drumGeo = new THREE.CylinderGeometry(0.8, 0.8, 3, 16);
+                const drum = new THREE.Mesh(drumGeo, winchMat);
+                drum.rotation.x = Math.PI / 2;
+                drum.position.set(12, 6 + 1.9, 0);
+                drum.castShadow = true;
+                group.add(drum);
+                meshes.winchDrum = drum;
+
+                // [NOVO - Etapa 3] Hitbox do Guincho
+                const winchHitGeo = new THREE.SphereGeometry(3, 16, 16);
+                const winchHitbox = new THREE.Mesh(winchHitGeo, hitMat);
+                winchHitbox.position.copy(drum.position);
+                // Vincula esta área de clique ao ID específico deste rebocador
+                winchHitbox.userData = { type: 'winch', tugId: tugId };
+                group.add(winchHitbox);
+                hitboxes.push(winchHitbox);
+
+                // [NOVO - Etapa 7] Luzes do Rebocador
+                const rPort = new THREE.PointLight(0xff0000, 0, 150); rPort.position.set(-5, 10, -4.5); rPort.userData.baseIntensity = 3.0; group.add(rPort); navLights.push(rPort);
+                const rStbd = new THREE.PointLight(0x00ff00, 0, 150); rStbd.position.set(-5, 10, 4.5); rStbd.userData.baseIntensity = 3.0; group.add(rStbd); navLights.push(rStbd);
+                const rMast = new THREE.PointLight(0xffffff, 0, 300); rMast.position.set(-4, 13, 0); rMast.userData.baseIntensity = 3.0; group.add(rMast); navLights.push(rMast);
+                const rStern = new THREE.PointLight(0xffffff, 0, 150); rStern.position.set(-16, 5, 0); rStern.userData.baseIntensity = 3.0; group.add(rStern); navLights.push(rStern);
+
+                // Vetores Cinemáticos
+                const arrowBB = new THREE.ArrowHelper(new THREE.Vector3(-1,0,0), new THREE.Vector3(-14, 0, -4), 0.1, 0x00ffff, 1, 0.5);
+                group.add(arrowBB);
+                meshes.jetArrowBB = arrowBB;
+                
+                const arrowBE = new THREE.ArrowHelper(new THREE.Vector3(-1,0,0), new THREE.Vector3(-14, 0, 4), 0.1, 0x00ffff, 1, 0.5);
+                group.add(arrowBE);
+                meshes.jetArrowBE = arrowBE;
+
+                const resArrow = new THREE.ArrowHelper(new THREE.Vector3(1,0,0), new THREE.Vector3(0, 6, 0), 0.1, 0x39ff14, 2, 1);
+                group.add(resArrow);
+                meshes.resultantArrow = resArrow;
+
+                // Cabo HMPE Dinâmico (Curva Bezier Singular deste Tug)
+                const ropeMaterial = new THREE.LineBasicMaterial({ color: 0xffff00, linewidth: 2 });
+                const ropePoints = [];
+                for (let i = 0; i <= 20; i++) ropePoints.push(new THREE.Vector3(0, 0, 0));
+                const ropeGeo = new THREE.BufferGeometry().setFromPoints(ropePoints);
+                const ropeL = new THREE.Line(ropeGeo, ropeMaterial);
+                ropeL.visible = false;
+                scene.add(ropeL);
+                meshes.ropeLine = ropeL;
+                
+                meshes.tugboat = group;
+                scene.add(group);
+                
+                return meshes;
+            }
+
+            // Instancia a Frota
+            Object.values(tugs).forEach(t => {
+                t.meshes = createTugboatMesh(t.id, t.color);
+            });
+
+            // [NOVO - Etapa 10] Criação das 4 Malhas de Linha de Amarração do Navio
+            mooringLines.forEach(line => {
+                const lMat = new THREE.LineBasicMaterial({ color: line.color, linewidth: 2 });
+                const lPts = [];
+                for (let i = 0; i <= 20; i++) lPts.push(new THREE.Vector3(0, 0, 0));
+                const lGeo = new THREE.BufferGeometry().setFromPoints(lPts);
+                line.ropeLine = new THREE.Line(lGeo, lMat);
+                line.ropeLine.visible = false;
+                scene.add(line.ropeLine);
+            });
+        }
+
+        // ==========================================
+        // 5. [core/main.js] Eventos (Resize, Raycasting, Winch)
+        // ==========================================
+        function setupEventListeners() {
+            window.addEventListener('resize', onWindowResize, false);
+            
+            // Eventos de Zoom Controlo Rápido
+            document.getElementById('btn-zoom-in').addEventListener('click', () => {
+                const dir = new THREE.Vector3().subVectors(controls.target, camera.position).normalize();
+                camera.position.add(dir.multiplyScalar(20)); // Aproxima 20 metros por clique
+                controls.update();
+            });
+            document.getElementById('btn-zoom-out').addEventListener('click', () => {
+                const dir = new THREE.Vector3().subVectors(camera.position, controls.target).normalize();
+                camera.position.add(dir.multiplyScalar(20)); // Afasta 20 metros por clique
+                controls.update();
+            });
+
+            // [NOVO - Etapa 3] Eventos de Raycasting (Pointer Events para Mouse e Touch)
+            const canvasEl = renderer.domElement;
+            canvasEl.addEventListener('pointerdown', (e) => {
+                pointerDownPos.set(e.clientX, e.clientY);
+            });
+            
+            canvasEl.addEventListener('pointerup', (e) => {
+                // Se o utilizador arrastou o dedo mais de 10px, é rotação de câmara, ignorar raycast.
+                const dist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+                if (dist > 10) return;
+
+                // Converte coordenadas do ecrã para Normalizadas (-1 a +1)
+                mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(hitboxes);
+
+                if (intersects.length > 0) {
+                    handleInteraction(intersects[0].object.userData);
+                } else if (ropeState.status === 1) {
+                    // Clicou no vazio com o cabo na mão, aborta a ligação.
+                    ropeState.status = 0;
+                    ropeLine.visible = false;
+                    document.getElementById('status-message').style.display = 'none';
+                }
+            });
+        }
+
+        // [NOVO - Etapa 10] Lógica do Painel de Piloto do Panamax
+        function setupShipPanel() {
+            const slEngine = document.getElementById('sl-ship-engine');
+            const slRudder = document.getElementById('sl-ship-rudder');
+            const valEngine = document.getElementById('val-ship-engine');
+            const valRudder = document.getElementById('val-ship-rudder');
+            
+            slEngine.addEventListener('input', (e) => {
+                shipState.engineThrust = parseFloat(e.target.value);
+                valEngine.innerText = shipState.engineThrust;
+            });
+            document.getElementById('btn-ship-stop').addEventListener('click', () => {
+                slEngine.value = 0; shipState.engineThrust = 0; valEngine.innerText = "0";
+            });
+
+            slRudder.addEventListener('input', (e) => {
+                shipState.rudderAngle = parseFloat(e.target.value);
+                valRudder.innerText = shipState.rudderAngle;
+            });
+            document.getElementById('btn-ship-midships').addEventListener('click', () => {
+                slRudder.value = 0; shipState.rudderAngle = 0; valRudder.innerText = "0";
+            });
+
+            // Toggle visibility
+            const btnToggle = document.getElementById('btn-toggle-ship');
+            const content = document.getElementById('ship-content');
+            btnToggle.addEventListener('click', () => {
+                const hidden = content.style.display === 'none';
+                content.style.display = hidden ? 'flex' : 'none';
+                btnToggle.innerText = hidden ? '▼ Comando Panamax' : '► Comando Panamax';
+            });
+        }
+
+        // [NOVO - Etapa 3] Lógica do Painel do Guincho
+        function setupWinchPanel() {
+            const btnHeave = document.getElementById('btn-heave');
+            const btnPay = document.getElementById('btn-pay');
+            const btnBrake = document.getElementById('btn-brake');
+            const btnDisconnect = document.getElementById('btn-disconnect'); // [NOVO - 3.2]
+
+            // Função auxiliar para reengatar o freio automaticamente se rodar o motor do guincho
+            const autoEngageBrake = () => {
+                if (!ropeState.brakeEngaged) {
+                    ropeState.brakeEngaged = true;
+                    btnBrake.classList.add('btn-toggle-active');
+                    btnBrake.innerText = "Freio: Travado";
+                }
+            };
+
+            // Heave (Caçar)
+            const startHeave = (e) => { e.preventDefault(); ropeState.winchAction = 1; autoEngageBrake(); };
+            const stopHeave = (e) => { e.preventDefault(); ropeState.winchAction = 0; };
+            btnHeave.addEventListener('mousedown', startHeave); btnHeave.addEventListener('touchstart', startHeave);
+            btnHeave.addEventListener('mouseup', stopHeave); btnHeave.addEventListener('touchend', stopHeave);
+            btnHeave.addEventListener('mouseleave', stopHeave);
+
+            // Pay-out (Arriar)
+            const startPay = (e) => { e.preventDefault(); ropeState.winchAction = -1; autoEngageBrake(); };
+            const stopPay = (e) => { e.preventDefault(); ropeState.winchAction = 0; };
+            btnPay.addEventListener('mousedown', startPay); btnPay.addEventListener('touchstart', startPay);
+            btnPay.addEventListener('mouseup', stopPay); btnPay.addEventListener('touchend', stopPay);
+            btnPay.addEventListener('mouseleave', stopPay);
+
+            // [ATUALIZADO - 3.2] Toggle Brake (Travado / Solto - Freewheel)
+            btnBrake.addEventListener('click', () => {
+                ropeState.brakeEngaged = !ropeState.brakeEngaged;
+                if (ropeState.brakeEngaged) {
+                    btnBrake.classList.add('btn-toggle-active');
+                    btnBrake.innerText = "Freio: Travado";
+                } else {
+                    btnBrake.classList.remove('btn-toggle-active');
+                    btnBrake.innerText = "Freio: Solto";
+                }
+            });
+
+            // [NOVO - 3.2] Desconexão Segura (Bloqueada se sob tensão)
+            window.attemptDisconnect = () => {
+                if (ropeState.tension > 1.0) {
+                    // Interlock de Segurança Ativado (Feedback Visual)
+                    const msgEl = document.getElementById('status-message');
+                    msgEl.innerText = "ERRO: Tensão demasiado alta para largar!";
+                    msgEl.style.display = 'block';
+                    msgEl.style.background = 'rgba(239, 68, 68, 0.9)'; // Vermelho
+                    
+                    // Repõe mensagem normal após 3 segundos
+                    setTimeout(() => {
+                        if (ropeState.status === 2) msgEl.style.display = 'none';
+                        msgEl.style.background = 'rgba(234, 179, 8, 0.9)'; // Amarelo
+                        msgEl.innerText = "Selecione o Cabeço no Cais";
+                    }, 3000);
+                } else {
+                    // Desconexão Segura
+                    ropeState.status = 0;
+                    ropeState.connectedBollard = null;
+                    ropeLine.visible = false;
+                    btnDisconnect.style.display = 'none';
+                }
+            };
+
+            btnDisconnect.addEventListener('click', window.attemptDisconnect);
+        }
+
+        // [NOVO - Etapa 3] Máquina de Estados da Ligação
+        function handleInteraction(userData) {
+            const msgEl = document.getElementById('status-message');
+            const btnDisconnect = document.getElementById('btn-disconnect'); // [NOVO - 3.2]
+
+            if (ropeState.status === 0 && userData.type === 'winch') {
+                // Selecionou um guincho específico - Troca imediatamente o controlo para ele!
+                if(userData.tugId) switchTug(userData.tugId);
+                
+                ropeState.status = 1;
+                ropeLine.visible = true;
+                msgEl.style.display = 'block';
+            } 
+            else if (ropeState.status === 1 && userData.type === 'bollard') {
+                // Conectou ao cabeço
+                ropeState.status = 2;
+                ropeState.connectedBollard = userData.ref;
+                msgEl.style.display = 'none';
+                btnDisconnect.style.display = 'block'; // [NOVO - 3.2] Mostra botão de largada
+                
+                // O comprimento inicial da linha será a distância exata da ligação [ATUALIZADO - Etapa 4]
+                const winchPosWorld = new THREE.Vector3();
+                winchDrum.getWorldPosition(winchPosWorld);
+                const bolPosWorld = new THREE.Vector3();
+                userData.ref.getWorldPosition(bolPosWorld); // Captura posição global mesmo se for navio
+                
+                ropeState.lengthL0 = winchPosWorld.distanceTo(bolPosWorld);
+            }
+            else if (ropeState.status === 2 && userData.type === 'bollard' && userData.ref === ropeState.connectedBollard) {
+                // [NOVO - Etapa 7.1] Desconectar clicando fisicamente no cabeço conetado!
+                if (window.attemptDisconnect) window.attemptDisconnect();
+            }
+            else if (ropeState.status === 0 && userData.type === 'mooring') {
+                // [NOVO - Etapa 10] Desamarrar Navio (Clicando nos Cabeços)
+                const line = mooringLines.find(l => l.id === userData.mooringId);
+                if (line && line.active) {
+                    line.active = false;
+                    line.ropeLine.visible = false;
+                    
+                    const msgEl = document.getElementById('status-message');
+                    msgEl.innerText = `${line.type} LARGADO!`;
+                    msgEl.style.display = 'block';
+                    msgEl.style.background = 'rgba(16, 185, 129, 0.9)'; // Verde
+                    setTimeout(() => {
+                        if (ropeState.status === 0) msgEl.style.display = 'none';
+                        msgEl.style.background = 'rgba(234, 179, 8, 0.9)';
+                        msgEl.innerText = "Selecione o Cabeço no Cais";
+                    }, 2000);
+                }
+            }
+        }
+
+        // ==========================================
+        // 5.1 [ui/azipodPanel.js] Gestor de Joysticks Virtuais
+        // ==========================================
+        function setupJoysticks() {
+            createAzimuthControl('joystick-bb', 'stick-bb', 'slider-bb', 'bb');
+            createAzimuthControl('joystick-be', 'stick-be', 'slider-be', 'be');
+
+            // [NOVO - 3.2] Lógica do Botão Twin Control
+            const btnTwin = document.getElementById('btn-twin');
+            const joystickBE = document.getElementById('joystick-be');
+            const sliderBE = document.getElementById('slider-be'); // [ATUALIZADO - Etapa 5]
+            
+            btnTwin.addEventListener('click', () => {
+                isTwinControl = !isTwinControl;
+                if (isTwinControl) {
+                    btnTwin.classList.add('btn-toggle-active');
+                    joystickBE.classList.add('joystick-ghost');
+                    sliderBE.classList.add('joystick-ghost');
+                } else {
+                    btnTwin.classList.remove('btn-toggle-active');
+                    joystickBE.classList.remove('joystick-ghost');
+                    sliderBE.classList.remove('joystick-ghost');
+                    // Reinicia fisicamente o estibordo ao sair do Twin
+                    if (thrusters && thrusters.be) thrusters.be.thrust = 0;
+                    sliderBE.value = 0;
+                }
+            });
+        }
+
+        // [ATUALIZADO - Etapa 5] Refatoração para Dial Direcional e Slider de RPM
+        function createAzimuthControl(baseId, stickId, sliderId, side) {
+            const base = document.getElementById(baseId);
+            const stick = document.getElementById(stickId);
+            const slider = document.getElementById(sliderId);
+            
+            // O raio agora é fixo, o stick fica sempre na borda (Timão)
+            const radius = base.clientWidth / 2 - stick.clientWidth / 2; 
+            let active = false;
+            let lastTapTime = 0; 
+
+            // Lógica do Slider de RPM
+            slider.addEventListener('input', (e) => {
+                if (thrusters && thrusters[side]) thrusters[side].thrust = e.target.value / 100;
+            });
+
+            function updateDial(event) {
+                if (!active) return;
+                
+                const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+                const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+                
+                const rect = base.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                let dx = clientX - centerX;
+                let dy = clientY - centerY;
+                const angle = Math.atan2(dy, dx);
+                
+                // O stick fica permanentemente na borda
+                const stickX = radius * Math.cos(angle);
+                const stickY = radius * Math.sin(angle);
+                
+                stick.style.transition = 'none';
+                stick.style.transform = `translate(calc(-50% + ${stickX}px), calc(-50% + ${stickY}px))`;
+
+                // Apenas atualiza o ângulo
+                if (thrusters && thrusters[side]) thrusters[side].angle = angle + Math.PI / 2; 
+            }
+
+            function resetMachine() {
+                active = false;
+                if (thrusters && thrusters[side]) thrusters[side].thrust = 0;
+                slider.value = 0;
+            }
+
+            function handleStart(e) {
+                const currentTime = Date.now();
+                const tapLength = currentTime - lastTapTime;
+                lastTapTime = currentTime;
+
+                // Duplo clique agora zera a MÁQUINA (RPM), não a direção
+                if (tapLength > 0 && tapLength < 300) {
+                    if (e.cancelable) e.preventDefault(); 
+                    resetMachine();
+                    return;
+                }
+
+                active = true;
+                updateDial(e);
+            }
+
+            function handleEnd() {
+                active = false;
+            }
+
+            // Eventos Mouse (Apenas para rodar o Dial)
+            base.addEventListener('mousedown', handleStart);
+            window.addEventListener('mousemove', updateDial);
+            window.addEventListener('mouseup', handleEnd);
+
+            // Eventos Touch (Mobile)
+            base.addEventListener('touchstart', (e) => { if(e.cancelable) e.preventDefault(); handleStart(e); }, {passive: false});
+            window.addEventListener('touchmove', updateDial, {passive: false});
+            window.addEventListener('touchend', handleEnd);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // ==========================================
+        // 6. [physics/tugKinetics.js] Física Vetorial do Rebocador
+        // ==========================================
+        function updatePhysics(dt) {
+            // Prevenção contra saltos anómalos de tempo
+            if (dt > 0.1) dt = 0.1;
+
+            // [NOVO - 3.2] Sincronização Twin Control (Mestre: BB, Escravo: BE)
+            if (isTwinControl) {
+                thrusters.be.thrust = thrusters.bb.thrust;
+                thrusters.be.angle = thrusters.bb.angle;
+                
+                // Espelha visualmente o movimento do stick e do slider [ATUALIZADO Etapa 5]
+                const stickBB = document.getElementById('stick-bb');
+                const stickBE = document.getElementById('stick-be');
+                const sliderBB = document.getElementById('slider-bb');
+                const sliderBE = document.getElementById('slider-be');
+                
+                stickBE.style.transform = stickBB.style.transform;
+                sliderBE.value = sliderBB.value;
+            }
+
+            const thrustMultiplier = 600; // [ATUALIZADO] Força aumentada 
+            
+            let shipForceGlobal = new THREE.Vector2(0, 0); 
+            let shipTorque = 0; 
+
+            // Cálculo do Veto Global da Corrente Oceânica
+            const curRads = envState.currentDir * Math.PI / 180;
+            const curX = (envState.currentMag * 0.5144) * Math.cos(curRads);
+            const curZ = (envState.currentMag * 0.5144) * Math.sin(curRads);
+
+            // ===================================
+            // A. PROCESSAMENTO DA FROTA DE REBOCADORES
+            // ===================================
+            Object.values(tugs).forEach(tug => {
+                const tState = tug.state;
+                const tThrusters = tug.thrusters;
+                const tRope = tug.rope;
+                const tMeshes = tug.meshes;
+
+                let tugForceX = 0;
+                let tugForceZ = 0;
+                let tugTorque = 0;
+                let ropeForceGlobal = new THREE.Vector2(0, 0);
+                
+                // --- 1. FÍSICA DO CABO E GUINCHO ---
+                if (tRope.status === 2 && tRope.connectedBollard) {
+                    if (tRope.winchAction === 1) tRope.lengthL0 -= tRope.winchSpeed * dt;
+                    if (tRope.winchAction === -1) tRope.lengthL0 += tRope.winchSpeed * dt;
+                    if (tRope.lengthL0 < 0) tRope.lengthL0 = 0;
+                    
+                    const winchPosWorld = new THREE.Vector3();
+                    if(tMeshes.winchDrum) tMeshes.winchDrum.getWorldPosition(winchPosWorld);
+                    
+                    const bolPos = new THREE.Vector3(); 
+                    tRope.connectedBollard.getWorldPosition(bolPos);
+                    
+                    const dx = bolPos.x - winchPosWorld.x;
+                    const dz = bolPos.z - winchPosWorld.z;
+                    const distance = Math.hypot(dx, dz);
+
+                    if (!tRope.brakeEngaged && distance > tRope.lengthL0) {
+                        tRope.lengthL0 = distance; 
+                    }
+
+                    if (distance > tRope.lengthL0 && tRope.lengthL0 > 0) {
+                        const stretch = distance - tRope.lengthL0;
+                        const cosH_tug = Math.cos(tState.heading);
+                        const sinH_tug = Math.sin(tState.heading);
+                        const global_rX = 12 * cosH_tug - 0 * sinH_tug;
+                        const global_rZ = 12 * sinH_tug + 0 * cosH_tug;
+
+                        let vWinchX = tState.velocity.x + global_rZ * tState.angularVelocity;
+                        let vWinchZ = tState.velocity.y - global_rX * tState.angularVelocity;
+
+                        let vBollardX = 0, vBollardZ = 0, bGlobal_rX = 0, bGlobal_rZ = 0;
+                        
+                        if (tRope.connectedBollard.userData && tRope.connectedBollard.userData.isDynamic) {
+                            const bPos = tRope.connectedBollard.position;
+                            const sCosH = Math.cos(shipState.heading);
+                            const sSinH = Math.sin(shipState.heading);
+                            bGlobal_rX = bPos.x * sCosH - bPos.z * sSinH;
+                            bGlobal_rZ = bPos.x * sSinH + bPos.z * sCosH;
+                            vBollardX = shipState.velocity.x + bGlobal_rZ * shipState.angularVelocity;
+                            vBollardZ = shipState.velocity.y - bGlobal_rX * shipState.angularVelocity;
+                        }
+
+                        const dirX = dx / distance;
+                        const dirZ = dz / distance;
+                        const relVelX = vBollardX - vWinchX;
+                        const relVelZ = vBollardZ - vWinchZ;
+                        const vStretch = (relVelX * dirX) + (relVelZ * dirZ);
+
+                        let tension = (tRope.k * stretch) + (tRope.damping * vStretch);
+                        if (tension < 0) tension = 0; 
+                        tRope.tension = tension;
+
+                        ropeForceGlobal.x = dirX * tension;
+                        ropeForceGlobal.y = dirZ * tension;
+
+                        // Adiciona Forças ao Navio
+                        if (tRope.connectedBollard.userData && tRope.connectedBollard.userData.isDynamic) {
+                            const sForX = -ropeForceGlobal.x;
+                            const sForZ = -ropeForceGlobal.y;
+                            shipForceGlobal.x += sForX;
+                            shipForceGlobal.y += sForZ;
+                            shipTorque += (bGlobal_rZ * sForX) - (bGlobal_rX * sForZ);
+                        }
+                        tugTorque += (global_rZ * ropeForceGlobal.x) - (global_rX * ropeForceGlobal.y);
+                    } else {
+                        tRope.tension = 0; 
+                    }
+                } else {
+                    tRope.tension = 0;
+                }
+
+                // --- 2. FÍSICA DOS PROPULSORES (THRUSTERS) ---
+                ['bb', 'be'].forEach(side => {
+                    const t = tThrusters[side];
+                    const arrowHelper = side === 'bb' ? tMeshes.jetArrowBB : tMeshes.jetArrowBE;
+
+                    if (t.thrust > 0) {
+                        const forceMag = t.thrust * thrustMultiplier;
+                        const fX = forceMag * Math.cos(t.angle);
+                        const fZ = forceMag * Math.sin(t.angle);
+                        
+                        tugForceX += fX;
+                        tugForceZ += fZ;
+
+                        const steeringBoost = 2.5; 
+                        tugTorque += ((t.pos.z * fX) - (t.pos.x * fZ)) * steeringBoost;
+
+                        if (arrowHelper) {
+                            arrowHelper.setDirection(new THREE.Vector3(-Math.cos(t.angle), 0, -Math.sin(t.angle)).normalize());
+                            arrowHelper.setLength(t.thrust * 12);
+                            arrowHelper.visible = true;
+                        }
+                    } else {
+                        if (arrowHelper) arrowHelper.visible = false;
+                    }
+                });
+
+                if (tMeshes.resultantArrow) {
+                    const resultantMag = Math.sqrt(tugForceX * tugForceX + tugForceZ * tugForceZ);
+                    if (resultantMag > 0) {
+                        tMeshes.resultantArrow.setDirection(new THREE.Vector3(tugForceX, 0, tugForceZ).normalize());
+                        tMeshes.resultantArrow.setLength(resultantMag / 4);
+                        tMeshes.resultantArrow.visible = true;
+                    } else {
+                        tMeshes.resultantArrow.visible = false;
+                    }
+                }
+
+                // --- 3. INTEGRAÇÃO DE ARRASTO E VENTO (TUG) ---
+                const cosH = Math.cos(tState.heading);
+                const sinH = Math.sin(tState.heading);
+                
+                const globalForceX = (tugForceX * cosH + tugForceZ * sinH) + ropeForceGlobal.x;
+                const globalForceZ = (-tugForceX * sinH + tugForceZ * cosH) + ropeForceGlobal.y;
+
+                const windRads = envState.windDir * Math.PI / 180;
+                const windMps = envState.windMag * 0.5144; 
+                const windVecX = windMps * Math.cos(windRads);
+                const windVecZ = windMps * Math.sin(windRads);
+
+                const cWx = windVecX * cosH + windVecZ * sinH;
+                const cWz = -windVecX * sinH + windVecZ * cosH;
+                const twFx = 0.00006 * 60 * cWx * Math.abs(cWx);
+                const twFz = 0.00006 * 150 * cWz * Math.abs(cWz);
+                const tWGlobalX = twFx * cosH - twFz * sinH;
+                const tWGlobalZ = twFx * sinH + twFz * cosH;
+
+                tState.velocity.x += ((globalForceX + tWGlobalX) / tState.mass) * dt;
+                tState.velocity.y += ((globalForceZ + tWGlobalZ) / tState.mass) * dt;
+                tState.angularVelocity += (tugTorque / tState.inertia) * dt;
+
+                const vRelX = tState.velocity.x - curX;
+                const vRelZ = tState.velocity.y - curZ;
+                const vLocalX = vRelX * cosH + vRelZ * sinH;
+                const vLocalZ = -vRelX * sinH + vRelZ * cosH;
+                
+                const surgeDragSec = 0.90; 
+                const swayDragSec  = 0.10; 
+                const angularDragSec = 0.60; 
+                
+                const dampedLocalX = vLocalX * Math.pow(surgeDragSec, dt);
+                const dampedLocalZ = vLocalZ * Math.pow(swayDragSec, dt);
+                
+                tState.velocity.x = (dampedLocalX * cosH - dampedLocalZ * sinH) + curX;
+                tState.velocity.y = (dampedLocalX * sinH + dampedLocalZ * cosH) + curZ;
+                tState.angularVelocity *= Math.pow(angularDragSec, dt);
+            });
+
+            // Atualiza GUI da Telemetria (Apenas p/ Tug Ativo)
+            document.getElementById('ui-tension').innerText = ropeState.tension.toFixed(1) + ' t';
+            document.getElementById('ui-length').innerText = ropeState.lengthL0.toFixed(1) + ' m';
+            if (ropeState.tension > 90) document.getElementById('ui-tension').style.color = 'var(--danger-color)';
+            else if (ropeState.tension > 45) document.getElementById('ui-tension').style.color = '#eab308';
+            else document.getElementById('ui-tension').style.color = 'var(--safe-color)';
+
+            ['bb', 'be'].forEach(side => {
+                const t = thrusters[side];
+                const rpm = Math.round(t.thrust * 100);
+                let degrees = (t.angle * 180 / Math.PI) % 360;
+                if (degrees < 0) degrees += 360;
+                degrees = Math.round(degrees);
+                const hud = document.getElementById(`hud-${side}`);
+                if(hud) hud.innerText = `${side.toUpperCase()} | ${rpm.toString().padStart(3, '0')}% | ${degrees.toString().padStart(3, '0')}°`;
+            });
+
+            // ===================================
+            // B. PROCESSAMENTO DO NAVIO MERCANTE
+            // ===================================
+            const windRads = envState.windDir * Math.PI / 180;
+            const windMps = envState.windMag * 0.5144; 
+            const windVecX = windMps * Math.cos(windRads);
+            const windVecZ = windMps * Math.sin(windRads);
+            const swCosH = Math.cos(shipState.heading);
+            const swSinH = Math.sin(shipState.heading);
+
+            const cWxS = windVecX * swCosH + windVecZ * swSinH;
+            const cWzS = -windVecX * swSinH + windVecZ * swCosH;
+            const swFx = 0.00006 * 1000 * cWxS * Math.abs(cWxS);
+            const swFz = 0.00006 * 6000 * cWzS * Math.abs(cWzS);
+            const shipWind = { x: swFx * swCosH - swFz * swSinH, z: swFx * swSinH + swFz * swCosH };
+
+            // Atualiza Posições Finais (Frota Inteira)
+            Object.values(tugs).forEach(tug => {
+                const ts = tug.state;
+                ts.position.x += ts.velocity.x * dt;
+                ts.position.y += ts.velocity.y * dt;
+                ts.heading += ts.angularVelocity * dt;
+
+                if (tug.meshes && tug.meshes.tugboat) {
+                    tug.meshes.tugboat.position.x = ts.position.x;
+                    tug.meshes.tugboat.position.z = ts.position.y;
+                    tug.meshes.tugboat.rotation.y = ts.heading;
+                }
+            });
+
+            // [NOVO - Etapa 10] Forças das Amarrações Fixas (Mooring Lines)
+            const m_sCosH = Math.cos(shipState.heading);
+            const m_sSinH = Math.sin(shipState.heading);
+
+            mooringLines.forEach(line => {
+                if (!line.active || !line.shipRef || !line.pierRef) return;
+                
+                const lBollardPosLocal = line.shipRef.position.clone();
+                // Rotação da posição do cabeço do navio para o referencial global
+                const bGlobal_rX = lBollardPosLocal.x * m_sCosH - lBollardPosLocal.z * m_sSinH;
+                const bGlobal_rZ = lBollardPosLocal.x * m_sSinH + lBollardPosLocal.z * m_sCosH;
+                
+                const bGlobalPos = new THREE.Vector3(
+                    shipState.position.x + bGlobal_rX,
+                    0,
+                    shipState.position.y + bGlobal_rZ
+                );
+                
+                const pierPos = new THREE.Vector3();
+                line.pierRef.getWorldPosition(pierPos);
+                
+                const dist = bGlobalPos.distanceTo(pierPos);
+                
+                if (dist > line.lengthL0) {
+                    const stretch = dist - line.lengthL0;
+                    const dirX = (pierPos.x - bGlobalPos.x) / dist;
+                    const dirZ = (pierPos.z - bGlobalPos.z) / dist;
+                    
+                    // Cinemática e Velocidade de Estiramento
+                    const vBollardX = shipState.velocity.x + bGlobal_rZ * shipState.angularVelocity;
+                    const vBollardZ = shipState.velocity.y - bGlobal_rX * shipState.angularVelocity;
+                    
+                    const relVelX = 0 - vBollardX; // Cais=0
+                    const relVelZ = 0 - vBollardZ;
+                    const vStretch = (relVelX * dirX) + (relVelZ * dirZ);
+                    
+                    // Tensão do HMPE (k=200, damp=400)
+                    let tension = (200 * stretch) + (400 * vStretch);
+                    if (tension < 0) tension = 0;
+                    line.tension = tension;
+                    
+                    // Adiciona à acumulação do navio (Puxa do Navio para o Cais)
+                    if (tension > 0) {
+                        const forceX = dirX * tension;
+                        const forceZ = dirZ * tension;
+                        shipForceGlobal.x += forceX;
+                        shipForceGlobal.y += forceZ;
+                        shipTorque += (bGlobal_rZ * forceX) - (bGlobal_rX * forceZ);
+                    }
+                } else {
+                    line.tension = 0;
+                }
+            });
+
+            // [NOVO - Etapa 10] Governo do Navio (Propulsão e Leme / Prop-wash)
+            // Motor (F = 100t max ahead, -100t max astern)
+            const engineForce = shipState.engineThrust; // 100% = 100t
+            
+            // O Navio avança na direção +X local (0 graus heading)
+            const eForceGlobalX = engineForce * m_sCosH;
+            const eForceGlobalZ = engineForce * m_sSinH;
+            
+            shipForceGlobal.x += eForceGlobalX;
+            shipForceGlobal.y += eForceGlobalZ;
+            
+            // Efeito de Leme (Rudder) na popa (x = -110)
+            if (Math.abs(shipState.rudderAngle) > 0.1) {
+                // Se puxa engine, prop wash gigante. Se desliza passivo, usa velocidade tangencial.
+                const speedForRudder = Math.max(Math.abs(engineForce), Math.abs(shipState.velocity.x * 20)); 
+                const rudderEffRads = shipState.rudderAngle * Math.PI / 180;
+                
+                // Força Lateral (Z Local) = Constante * Speed * sen(Angle)
+                const fRudderLocalZ = 0.5 * speedForRudder * Math.sin(rudderEffRads);
+                
+                // Converte lateral (Z local) para global (Heading Z e X)
+                const fRudderX = fRudderLocalZ * -m_sSinH;
+                const fRudderZ = fRudderLocalZ * m_sCosH;
+                
+                shipForceGlobal.x += fRudderX;
+                shipForceGlobal.y += fRudderZ;
+                
+                // Vector Rx = -110, Rz = 0 (Popa)
+                const stern_rX = -110 * m_sCosH;
+                const stern_rZ = -110 * m_sSinH;
+                
+                shipTorque += (stern_rZ * fRudderX) - (stern_rX * fRudderZ);
+            }
+
+            // Integração do Navio Mercante c/ Vento e Cabos
+            shipState.velocity.x += ((shipForceGlobal.x + shipWind.x) / shipState.mass) * dt;
+            shipState.velocity.y += ((shipForceGlobal.y + shipWind.z) / shipState.mass) * dt;
+            shipState.angularVelocity += (shipTorque / shipState.inertia) * dt;
+            
+            // Drag do Navio ancorado à velocidade da corrente
+            const shipLinearDragSec = 0.99; 
+            const shipAngularDragSec = 0.40; // Também aumenta o seu arrasto rotacional 
+            
+            const sVRelX = shipState.velocity.x - curX;
+            const sVRelZ = shipState.velocity.y - curZ;
+            const sCosH = Math.cos(shipState.heading);
+            const sSinH = Math.sin(shipState.heading);
+            
+            const sLocalX = sVRelX * sCosH + sVRelZ * sSinH;
+            const sLocalZ = -sVRelX * sSinH + sVRelZ * sCosH;
+            
+            const sDampedLocalX = sLocalX * Math.pow(shipLinearDragSec, dt);
+            const sDampedLocalZ = sLocalZ * Math.pow(0.50, dt); // Panamax tem arrasto lateral monstruoso
+            
+            shipState.velocity.x = (sDampedLocalX * sCosH - sDampedLocalZ * sSinH) + curX;
+            shipState.velocity.y = (sDampedLocalX * sSinH + sDampedLocalZ * sCosH) + curZ;
+            shipState.angularVelocity *= Math.pow(shipAngularDragSec, dt);
+            
+            shipState.position.x += shipState.velocity.x * dt;
+            shipState.position.y += shipState.velocity.y * dt;
+            shipState.heading += shipState.angularVelocity * dt;
+            
+            if (merchantShip) {
+                merchantShip.position.x = shipState.position.x;
+                merchantShip.position.z = shipState.position.y;
+                merchantShip.rotation.y = shipState.heading;
+            }
+
+            // Deteção de Colisões Físicas Contínuas
+            checkCollisions();
+        }
+
+        let crashTimeout = null;
+        function showCrashWarning(msg) {
+            const msgEl = document.getElementById('status-message');
+            msgEl.innerText = msg;
+            msgEl.style.display = 'block';
+            msgEl.style.background = 'rgba(239, 68, 68, 0.9)'; // Vermelho Alerta
+            
+            if(crashTimeout) clearTimeout(crashTimeout);
+            crashTimeout = setTimeout(() => {
+                if (ropeState.status === 2) msgEl.style.display = 'none';
+                else {
+                    msgEl.style.background = 'rgba(234, 179, 8, 0.9)'; // Amarelo
+                    msgEl.innerText = "Selecione o Cabeço no Cais";
+                }
+            }, 3000);
+        }
+
+        function checkCollisions() {
+            // Constantes Geométricas Básicas
+            const pierFaceZ = -10; // Cais Front Face
+            
+            // 2. Panamax vs Cais
+            const shipReachZ = (225/2) * Math.abs(Math.sin(shipState.heading)) + 16 * Math.abs(Math.cos(shipState.heading));
+            if (shipState.position.y - shipReachZ < pierFaceZ) {
+                shipState.position.y = pierFaceZ + shipReachZ;
+                shipState.velocity.y *= -0.1;
+                if(Math.abs(shipState.velocity.y) > 0.1) showCrashWarning('IMPACTO: Panamax no Cais!');
+            }
+
+            // Avalia colisões para toda a Frota
+            Object.values(tugs).forEach(tug => {
+                const ts = tug.state;
+                
+                // 1. Rebocador vs Cais
+                const tugReachZ = 16 * Math.abs(Math.sin(ts.heading)) + 6 * Math.abs(Math.cos(ts.heading));
+                if (ts.position.y - tugReachZ < pierFaceZ) {
+                    ts.position.y = pierFaceZ + tugReachZ;
+                    ts.velocity.y *= -0.2; // Impacto inelástico
+                    if(Math.abs(ts.velocity.y) > 0.5) showCrashWarning('IMPACTO: Rebocador bateu no Cais!');
+                }
+
+                // 3. SAT: Rebocador vs Panamax (Círculo vs OBB)
+                const dx = ts.position.x - shipState.position.x;
+                const dz = ts.position.y - shipState.position.y;
+                const cosInv = Math.cos(-shipState.heading); 
+                const sinInv = Math.sin(-shipState.heading);
+                const localX = dx * cosInv - dz * sinInv;
+                const localZ = dx * sinInv + dz * cosInv;
+                
+                const hx = 225 / 2; 
+                const hz = 32 / 2;  
+                const cx = Math.max(-hx, Math.min(hx, localX)); 
+                const cz = Math.max(-hz, Math.min(hz, localZ));
+                
+                const distSq = (localX - cx) * (localX - cx) + (localZ - cz) * (localZ - cz);
+                const tugRadius = 14; 
+                
+                if (distSq < tugRadius * tugRadius && distSq > 0.001) {
+                    const dist = Math.sqrt(distSq);
+                    const penetration = tugRadius - dist;
+                    let normLocalX = (localX - cx) / dist;
+                    let normLocalZ = (localZ - cz) / dist;
+                    const normGlobalX = normLocalX * Math.cos(shipState.heading) - normLocalZ * Math.sin(shipState.heading);
+                    const normGlobalZ = normLocalX * Math.sin(shipState.heading) + normLocalZ * Math.cos(shipState.heading);
+                    
+                    ts.position.x += normGlobalX * penetration;
+                    ts.position.y += normGlobalZ * penetration;
+                    
+                    const vDotN = ts.velocity.x * normGlobalX + ts.velocity.y * normGlobalZ;
+                    if (vDotN < 0) { 
+                        ts.velocity.x -= 1.2 * vDotN * normGlobalX;
+                        ts.velocity.y -= 1.2 * vDotN * normGlobalZ;
+                        if (Math.abs(vDotN) > 0.5) showCrashWarning('ALERTA: Colisão Transversal!');
+                    }
+                }
+            });
+        }
+
+        // ==========================================
+        // 7. [core/main.js] Game Loop (Ciclo de Renderização)
+        // ==========================================
+        function animate(timestamp) {
+            requestAnimationFrame(animate);
+            try {
+
+            let dt = (timestamp - lastTime) / 1000;
+            if (isNaN(dt) || dt <= 0) dt = 0;
+            if (dt > 0.1) dt = 0.1; // Cap dt for physics stability (10 FPS minimum integration)
+            lastTime = timestamp;
+
+            // 1. Atualiza Física
+            updatePhysics(dt);
+
+            // [ATUALIZADO - Etapa 4] Renderização de todos os cabos de frota!
+            Object.values(tugs).forEach(tug => {
+                const tr = tug.rope;
+                const tl = tug.meshes.ropeLine;
+                const td = tug.meshes.winchDrum;
+                
+                if (tr.status > 0 && tl && td) {
+                    const winchPosWorld = new THREE.Vector3();
+                    td.getWorldPosition(winchPosWorld);
+                    let targetPos = new THREE.Vector3();
+
+                    if (tr.status === 1) {
+                        if (tug.id === activeTugId) {
+                            raycaster.setFromCamera(mouse, camera);
+                            const planeY = new THREE.Plane(new THREE.Vector3(0, 1, 0), -5);
+                            raycaster.ray.intersectPlane(planeY, targetPos);
+                            if (isNaN(targetPos.x)) targetPos.copy(winchPosWorld).add(new THREE.Vector3(0, -5, -10));
+                        } else {
+                            tl.visible = false;
+                            return; 
+                        }
+                    } else if (tr.status === 2 && tr.connectedBollard) {
+                        tr.connectedBollard.getWorldPosition(targetPos); 
+                    }
+
+                    const distance = winchPosWorld.distanceTo(targetPos);
+                    const slack = Math.max(0, tr.lengthL0 - distance);
+                    const midPoint = new THREE.Vector3().addVectors(winchPosWorld, targetPos).multiplyScalar(0.5);
+                    
+                    if (slack > 0) {
+                        midPoint.y -= slack * 0.6; 
+                        if (midPoint.y < 0) midPoint.y = 0; 
+                    }
+
+                    const curve = new THREE.QuadraticBezierCurve3(winchPosWorld, midPoint, targetPos);
+                    tl.geometry.setFromPoints(curve.getPoints(20));
+                    tl.visible = true; // Força refresh visual
+                    
+                    if (tr.tension > 90) tl.material.color.setHex(0xff0000); 
+                    else if (tr.tension > 45) tl.material.color.setHex(0xff8800); 
+                    else tl.material.color.setHex(0xffff00); 
+                } else if (tl) {
+                    tl.visible = false;
+                }
+            });
+
+            // [NOVO - Etapa 10] Atualiza a renderização das 4 Linhas de Amarração do Navio (Catenárias Autônomas)
+            mooringLines.forEach(line => {
+                if (line.active && line.shipRef && line.pierRef && line.ropeLine) {
+                    const pA = new THREE.Vector3(); line.shipRef.getWorldPosition(pA);
+                    const pB = new THREE.Vector3(); line.pierRef.getWorldPosition(pB);
+                    
+                    const dist = pA.distanceTo(pB);
+                    const slack = Math.max(0, line.lengthL0 - dist);
+                    const mid = new THREE.Vector3().addVectors(pA, pB).multiplyScalar(0.5);
+                    
+                    if (slack > 0) {
+                        mid.y -= slack * 0.6; // Barriga elástica
+                        if (mid.y < 0) mid.y = 0; // Toca na água
+                    }
+                    
+                    const curve = new THREE.QuadraticBezierCurve3(pA, mid, pB);
+                    line.ropeLine.geometry.setFromPoints(curve.getPoints(20));
+                    
+                    // Tensões baseadas num cabo padrão sintético
+                    if (line.tension > 60) line.ropeLine.material.color.setHex(0xff0000);
+                    else if (line.tension > 30) line.ropeLine.material.color.setHex(0xff8800);
+                    else line.ropeLine.material.color.setHex(line.color); // Cor original do cabo
+                }
+            });
+
+            // [NOVO - Etapa 9] Animação dos Medidores Atmosféricos
+            if (windsockFabric) {
+                const windRads = envState.windDir * Math.PI / 180;
+                windsockFabric.rotation.y = -windRads;
+                
+                // Intensidade: 0 nós = cai na vertical, 60 nós = deita na horizontal
+                const droop = Math.max(0, Math.min(1, (60 - envState.windMag) / 60));
+                windsockFabric.rotation.z = -droop * (Math.PI / 2.2); // Dobra para baixo com falta de vento
+            }
+
+            if (uiCurrentArrow) {
+                uiCurrentArrow.style.transform = `translate(-50%, -100%) rotate(${envState.currentDir}deg)`;
+                uiCurrentCompass.style.opacity = envState.currentMag > 0.05 ? "1" : "0.2";
+            }
+
+            // 2. Atualiza controlos da câmara
+            controls.update();
+
+            // 3. Renderiza a cena
+            renderer.render(scene, camera);
+            
+            // [DEBUG REMOVIDO] Overlay de diagnóstico removido da build de produção
+            
+            } catch (e) {
+                console.error("ANIMATION ERROR:", e);
+                const el = document.getElementById('error-log');
+                if(el && !el.innerHTML.includes('ANIM')) {
+                   el.style.display = 'block';
+                   el.innerHTML += "<br>ANIM: " + e.message + " " + e.stack;
+                }
+            }
+        }
+
+        // Inicia a aplicação
+        init();
+
+    </script>
+</body>
+</html>

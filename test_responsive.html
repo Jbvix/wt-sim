@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste Responsivo</title>
+    <style>body { background: #333; color: white; padding: 20px; font-family: sans-serif; }</style>
+</head>
+<body>
+    <h2>Validação do Mobile-First (Media Queries)</h2>
+    <div style="display: flex; gap: 20px; align-items: flex-start;">
+        <div>
+            <h3>Modo Retrato (Portrait) - 400x800</h3>
+            <p>O overlay "Rode o Dispositivo" deve estar visível.</p>
+            <iframe src="winchsim.html" style="width: 400px; height: 800px; border: 2px solid red; background: black;"></iframe>
+        </div>
+        <div>
+            <h3>Modo Paisagem (Landscape) - 800x400</h3>
+            <p>Layout Otimizado (Painel do Clima colapsado por padrão).</p>
+            <iframe src="winchsim.html" style="width: 850px; height: 400px; border: 2px solid green; background: black;"></iframe>
+        </div>
+    </div>
+</body>
+</html>

@@ -117,8 +117,8 @@ export function updatePhysics(dt) {
         const sinH = Math.sin(tState.heading);
         const rX = 12 * cosH; // braço do guincho (x=12 local)
         const rZ = 12 * sinH;
-        const vWinchX = tState.velocity.x + rZ * tState.angularVelocity;
-        const vWinchZ = tState.velocity.y - rX * tState.angularVelocity;
+        const vWinchX = tState.velocity.x - rZ * tState.angularVelocity;
+        const vWinchZ = tState.velocity.y + rX * tState.angularVelocity;
 
         // Velocidade do cabeço (dinâmico se estiver no navio)
         let vBolX = 0, vBolZ = 0, bRX = 0, bRZ = 0;
@@ -128,8 +128,8 @@ export function updatePhysics(dt) {
           const sSinH = Math.sin(shipState.heading);
           bRX = bPos.x * sCosH - bPos.z * sSinH;
           bRZ = bPos.x * sSinH + bPos.z * sCosH;
-          vBolX = shipState.velocity.x + bRZ * shipState.angularVelocity;
-          vBolZ = shipState.velocity.y - bRX * shipState.angularVelocity;
+          vBolX = shipState.velocity.x - bRZ * shipState.angularVelocity;
+          vBolZ = shipState.velocity.y + bRX * shipState.angularVelocity;
         }
 
         const dirX = dx / distance;
@@ -279,8 +279,8 @@ export function updatePhysics(dt) {
       const dirX = (pierPos.x - bGlobalPos.x) / dist;
       const dirZ = (pierPos.z - bGlobalPos.z) / dist;
 
-      const vBolX = shipState.velocity.x + bGlobal_rZ * shipState.angularVelocity;
-      const vBolZ = shipState.velocity.y - bGlobal_rX * shipState.angularVelocity;
+      const vBolX = shipState.velocity.x - bGlobal_rZ * shipState.angularVelocity;
+      const vBolZ = shipState.velocity.y + bGlobal_rX * shipState.angularVelocity;
       const vStretch = (0 - vBolX) * dirX + (0 - vBolZ) * dirZ; // cais estático
 
       let tension = 400 * stretch + 800 * vStretch;

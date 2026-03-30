@@ -20,8 +20,12 @@ import { modelsCache } from './assets.js';
 
 /** Geometria padrão dos cabeços de amarração (cilindro). */
 const BOLLARD_GEO = new THREE.CylinderGeometry(0.5, 0.6, 1.5, 16);
-/** Material padrão dos cabeços. */
-const BOLLARD_MAT = new THREE.MeshStandardMaterial({ color: 0x222222 });
+/** Material padrão dos cabeços (Magenta Neon para destaque). */
+const BOLLARD_MAT = new THREE.MeshStandardMaterial({ 
+  color: 0xff00ff, 
+  emissive: 0xaa00aa,
+  roughness: 0.1 
+});
 /** Material das hitboxes (invisível ao render). */
 const HIT_MAT = new THREE.MeshBasicMaterial({ visible: false });
 /** Hitbox esférica para deteção de cliques. */
@@ -49,11 +53,12 @@ function createNavLight(parent, color, x, y, z, reach = 100) {
   light.position.set(x, y, z);
 
   const bulb = new THREE.Mesh(
-    new THREE.SphereGeometry(0.8, 8, 8),
+    new THREE.SphereGeometry(1.5, 8, 8), // Aumentado ligeiramente para visibilidade
     new THREE.MeshBasicMaterial({ color })
   );
   light.add(bulb);
   parent.add(light);
+  light.userData = { isNavLight: true, hexColor: color.toString(16) }; // Adicionado Tag dev tool
   g.navLights.push(light);
 }
 
@@ -136,7 +141,7 @@ function createTugboatMesh(tugId, colorHex) {
   // ── Guincho de Proa ────────────────────────────────────
   const winchBase = new THREE.Mesh(
     new THREE.BoxGeometry(3, 1.5, 4),
-    new THREE.MeshStandardMaterial({ color: 0x444444 })
+    new THREE.MeshStandardMaterial({ color: 0x00ff00, emissive: 0x00aa00 }) // Verde Neon
   );
   winchBase.position.set(12, 6 + 0.75, 0);
   winchBase.castShadow = true;
@@ -145,7 +150,7 @@ function createTugboatMesh(tugId, colorHex) {
   // Tambor do Guincho
   const drum = new THREE.Mesh(
     new THREE.CylinderGeometry(0.8, 0.8, 3, 16),
-    new THREE.MeshStandardMaterial({ color: 0x444444 })
+    new THREE.MeshStandardMaterial({ color: 0x00ff00, emissive: 0x00aa00 })
   );
   drum.rotation.x = Math.PI / 2;
   drum.position.set(12, 6 + 1.9, 0);

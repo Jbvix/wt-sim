@@ -28,6 +28,8 @@ import {
 
 // ── Dev Tool Temporária ──────────────────────────────────
 function initDevTools() {
+  const panel = document.getElementById('dev-calibration-panel');
+  const handle = document.getElementById('dev-drag-handle');
   const select = document.getElementById('dev-target-select');
   const rx = document.getElementById('dev-range-x');
   const ry = document.getElementById('dev-range-y');
@@ -37,27 +39,75 @@ function initDevTools() {
   const vz = document.getElementById('dev-val-z');
   const out = document.getElementById('dev-output');
 
-  if (!select) return;
+  if (!panel || !select) return;
 
-  // Enche a dropdown com todos os cabeços dinâmicos (navio)
-  const shipBollards = g.hitboxes.filter(h => h.userData.isDynamic);
-  
-  select.innerHTML = '<option value="tug-winch">Rebocador Ativo - Guincho</option>';
-  shipBollards.forEach(h => {
-    let name = h.userData.mooringId || h.userData.type + ' (Cabeço Navio)';
-    select.innerHTML += `<option value="${h.uuid}">${name}</option>`;
+  // Lógica de Draggable
+  let isDragging = false, startX, startY, initialLeft, initialTop;
+  handle.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    const rect = panel.getBoundingClientRect();
+    initialLeft = rect.left;
+    initialTop = rect.top;
+    panel.style.right = 'auto'; // desativa right para left funcionar
+    panel.style.bottom = 'auto';
   });
+  window.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    panel.style.left = `${initialLeft + dx}px`;
+    panel.style.top = `${initialTop + dy}px`;
+  });
+  window.addEventListener('mouseup', () => { isDragging = false; });
+
+  function populateTargets() {
+    select.innerHTML = '<option value="disabled">-- Selecione um alvo --</option>';
+    select.innerHTML += '<optgroup label="Rebocadores (Guinchos)">';
+    select.innerHTML += '<option value="tug-winch-stern">Rebocador Popa - Guincho</option>';
+    select.innerHTML += '<option value="tug-winch-bow">Rebocador Proa - Guincho</option>';
+    select.innerHTML += '</optgroup>';
+
+    const shipBollards = g.hitboxes.filter(h => h.userData.isDynamic);
+    select.innerHTML += '<optgroup label="Navio (Cabeços)">';
+    shipBollards.forEach(h => {
+      let name = h.userData.mooringId || h.userData.type;
+      select.innerHTML += `<option value="${h.uuid}">${name}</option>`;
+    });
+    select.innerHTML += '</optgroup>';
+
+    if (g.navLights && g.navLights.length > 0) {
+      select.innerHTML += '<optgroup label="Luzes de Navegação">';
+      g.navLights.forEach((l, i) => {
+        const hex = l.userData.hexColor || 'Luz';
+        select.innerHTML += `<option value="light-${l.uuid}">Luz ${hex} (${i})</option>`;
+      });
+      select.innerHTML += '</optgroup>';
+    }
+  }
 
   let currentTarget = null;
-  let targetType = 'tug-winch';
+  let targetType = 'disabled';
 
   function updateTarget() {
     targetType = select.value;
-    if (targetType === 'tug-winch') {
-      const tug = tugs[g.activeTugId];
-      if (tug && tug.meshes.winchDrum) {
-        currentTarget = tug.meshes.winchDrum;
-      }
+    currentTarget = null;
+
+    if (targetType === 'disabled') {
+      updateText(true);
+      return;
+    }
+
+    if (targetType === 'tug-winch-stern') {
+      const tug = tugs['stern'];
+      if (tug && tug.meshes.winchDrum) currentTarget = tug.meshes.winchDrum;
+    } else if (targetType === 'tug-winch-bow') {
+      const tug = tugs['bow'];
+      if (tug && tug.meshes.winchDrum) currentTarget = tug.meshes.winchDrum;
+    } else if (targetType.startsWith('light-')) {
+      const uuid = targetType.replace('light-', '');
+      currentTarget = g.navLights.find(l => l.uuid === uuid);
     } else {
       currentTarget = g.hitboxes.find(h => h.uuid === targetType);
     }
@@ -70,36 +120,36 @@ function initDevTools() {
     }
   }
 
-  function updateText() {
-    vx.innerText = rx.value;
-    vy.innerText = ry.value;
-    vz.innerText = rz.value;
+  function updateText(clear = false) {
+    if (clear) {
+      vx.innerText = '0'; vy.innerText = '0'; vz.innerText = '0';
+      out.innerText = 'A aguardar seleção...';
+      return;
+    }
+    vx.innerText = parseFloat(rx.value).toFixed(2);
+    vy.innerText = parseFloat(ry.value).toFixed(2);
+    vz.innerText = parseFloat(rz.value).toFixed(2);
     out.innerText = `x: ${rx.value}, y: ${ry.value}, z: ${rz.value}`;
   }
 
   function onSliderChange() {
     if (!currentTarget) return;
-    
     const x = parseFloat(rx.value);
     const y = parseFloat(ry.value);
     const z = parseFloat(rz.value);
-
-    // Ajustar malha
     currentTarget.position.set(x, y, z);
 
-    // Se é guincho, arrastar também a parent hitchbox (se for possível achar)
-    if (targetType === 'tug-winch') {
-      const tug = tugs[g.activeTugId];
-      // A hitbox do guincho é uma SphereGeometry nas children do rebocador Group
+    if (targetType === 'tug-winch-stern' || targetType === 'tug-winch-bow') {
+      const tugId = targetType.replace('tug-winch-', '');
+      const tug = tugs[tugId];
       if (tug && tug.meshes.tugboat) {
          const winchHit = tug.meshes.tugboat.children.find(c => c.userData.type === 'winch');
+         const winchBase = tug.meshes.tugboat.children.find(c => c.geometry && c.geometry.type === 'BoxGeometry'); // Approximation for winchBase
          if (winchHit) winchHit.position.set(x, y, z);
+         if (winchBase) winchBase.position.set(x, y - 1.15, z); // Adjust base along with drum
       }
-    } else {
-      // Se é um cabeço (Navio), arrastar também a mesh visual correspondente (que está em userData.ref)
-      if (currentTarget.userData && currentTarget.userData.ref) {
-        currentTarget.userData.ref.position.set(x, y, z);
-      }
+    } else if (!targetType.startsWith('light-') && currentTarget.userData && currentTarget.userData.ref) {
+      currentTarget.userData.ref.position.set(x, y, z);
     }
 
     updateText();
@@ -110,9 +160,12 @@ function initDevTools() {
   ry.addEventListener('input', onSliderChange);
   rz.addEventListener('input', onSliderChange);
 
-  // Inicializa com delay para garantir que o mundo está construído
-  setTimeout(updateTarget, 1000);
+  setTimeout(() => {
+    populateTargets();
+    updateTarget();
+  }, 1000);
 }
+
 
 // ─────────────────────────────────────────────────────────
 // 1. INICIALIZAÇÃO

@@ -344,33 +344,34 @@
   <!-- ═══════════════════════════════════════════════════
        PAINEL DE CALIBRAÇÃO (DEV TOOL TEMPORÁRIA)
        ═══════════════════════════════════════════════════ -->
-  <div id="dev-calibration-panel" class="panel" style="position: absolute; top: 10px; right: 10px; z-index: 100; width: 280px; font-size: 0.8rem;">
-    <h3 style="margin: 0 0 10px 0; color: #f97316; font-size: 0.9rem;">🛠️ Calibração de Offset</h3>
+  <div id="dev-calibration-panel" class="panel" style="position: absolute; top: 70px; right: 10px; z-index: 9999; width: 300px; font-size: 0.8rem; cursor: move; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+    <div id="dev-drag-handle" style="background: rgba(249, 115, 22, 0.2); padding: 8px; margin: -10px -10px 10px -10px; border-bottom: 1px solid #f97316; font-weight: bold; color: #f97316;">
+      🛠️ Calibração Flutuante (Arraste-me)
+    </div>
     
     <label style="display: block; margin-bottom: 5px;">Alvo:</label>
     <select id="dev-target-select" style="width: 100%; margin-bottom: 10px; background: rgba(0,0,0,0.5); color: white; border: 1px solid #555; padding: 4px;">
-      <option value="tug-winch">Guincho do Rebocador (Popa)</option>
-      <option value="ship-bollard">Navio - Lançante Proa BB</option>
-      <!-- Mais alvos podem ser adicionados pela lógica JS -->
+      <!-- Preenchido via JS -->
     </select>
 
     <div style="margin-bottom: 10px;">
-      <label>Eixo X (Longitudinal): <span id="dev-val-x">0</span></label>
-      <input type="range" id="dev-range-x" min="-120" max="150" step="0.5" value="0" style="width: 100%;">
+      <label>Eixo X (Comprimento): <span id="dev-val-x">0</span></label>
+      <input type="range" id="dev-range-x" min="-120" max="150" step="0.1" value="0" style="width: 100%;">
     </div>
     <div style="margin-bottom: 10px;">
       <label>Eixo Y (Altura): <span id="dev-val-y">0</span></label>
-      <input type="range" id="dev-range-y" min="0" max="30" step="0.5" value="0" style="width: 100%;">
+      <input type="range" id="dev-range-y" min="-10" max="40" step="0.1" value="0" style="width: 100%;">
     </div>
     <div style="margin-bottom: 10px;">
-      <label>Eixo Z (Transversal): <span id="dev-val-z">0</span></label>
-      <input type="range" id="dev-range-z" min="-25" max="25" step="0.5" value="0" style="width: 100%;">
+      <label>Eixo Z (Boca): <span id="dev-val-z">0</span></label>
+      <input type="range" id="dev-range-z" min="-25" max="25" step="0.1" value="0" style="width: 100%;">
     </div>
 
     <div style="background: rgba(0,0,0,0.8); padding: 5px; border-left: 3px solid #f97316; font-family: monospace;" id="dev-output">
       A aguardar seleção...
     </div>
   </div>
+
 
   <!-- ═══════════════════════════════════════════════════
        PONTO DE ENTRADA JS (ES Module)

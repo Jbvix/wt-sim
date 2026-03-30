@@ -18,6 +18,11 @@
 
   <title>WT-SIM — Simulador de Rebocagem Portuária</title>
 
+  <!-- Google Fonts — Outfit (display) + Roboto Mono (telemetria) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+
   <!-- Folha de estilos externa -->
   <link rel="stylesheet" href="src/css/style.css">
 
@@ -36,6 +41,70 @@
 </head>
 
 <body>
+
+  <!-- ═════════════════════════════════════════════════════
+       TELA INICIAL (SPLASH SCREEN)
+       ═══════════════════════════════════════════════════ -->
+  <div id="splash-screen">
+
+    <!-- SVG de onda animada no fundo -->
+    <svg class="splash-waves" viewBox="0 0 1440 320" preserveAspectRatio="none">
+      <path class="wave wave1" d="M0,160L48,170.7C96,181,192,203,288,192C384,181,480,139,576,128C672,117,768,139,864,160C960,181,1056,203,1152,197.3C1248,192,1344,160,1392,144L1440,128L1440,320L0,320Z"></path>
+      <path class="wave wave2" d="M0,224L48,208C96,192,192,160,288,165.3C384,171,480,213,576,218.7C672,224,768,192,864,176C960,160,1056,160,1152,170.7C1248,181,1344,203,1392,213.3L1440,224L1440,320L0,320Z"></path>
+    </svg>
+
+    <div class="splash-content">
+
+      <!-- Ícone / Logo -->
+      <div class="splash-icon">
+        <svg viewBox="0 0 100 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Casco do navio -->
+          <path d="M5 38 Q50 50 95 38 L88 46 Q50 58 12 46 Z" fill="#38bdf8" opacity="0.9"/>
+          <!-- Superestrutura -->
+          <rect x="52" y="24" width="24" height="14" rx="2" fill="#e2e8f0"/>
+          <rect x="55" y="18" width="14" height="8" rx="2" fill="#cbd5e1"/>
+          <!-- Mastro -->
+          <line x1="62" y1="18" x2="62" y2="8" stroke="#94a3b8" stroke-width="1.5"/>
+          <!-- Rebocador popa -->
+          <path d="M8 35 L18 32 L20 38 L10 40 Z" fill="#f97316" opacity="0.95"/>
+          <!-- Cabo de reboque -->
+          <path d="M18 34 Q30 30 40 36" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="3,2" fill="none"/>
+          <!-- Água -->
+          <path d="M0 46 Q20 42 40 46 Q60 50 80 46 Q100 42 110 46" stroke="#0ea5e9" stroke-width="1.5" fill="none" opacity="0.6"/>
+        </svg>
+      </div>
+
+      <!-- Título -->
+      <h1 class="splash-title">
+        <span class="splash-wt">WT</span><span class="splash-sim">-SIM</span>
+      </h1>
+      <p class="splash-subtitle">SIMULADOR DE REBOCAGEM PORTUÁRIA</p>
+
+      <!-- Badges de funcionalidades -->
+      <div class="splash-badges">
+        <span class="splash-badge">⚓ Física Naval 3D</span>
+        <span class="splash-badge">🚢 Panamax Dinâmico</span>
+        <span class="splash-badge">🌀 Vento &amp; Corrente</span>
+        <span class="splash-badge">🛥️ Rebocadores ASD</span>
+      </div>
+
+      <!-- Botão de entrada -->
+      <button id="btn-launch" class="splash-launch">
+        <span class="btn-launch-text">LANÇAR SIMULAÇÃO</span>
+        <svg class="btn-launch-arrow" viewBox="0 0 24 24" fill="none">
+          <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+      <!-- Créditos -->
+      <p class="splash-credits">
+        Desenvolvido por <strong>Jossian Brito</strong> • 
+        Praticagem &amp; Rebocagem Portuária •
+        <a href="physics.html" target="_blank">Ver Modelo Físico</a>
+      </p>
+
+    </div><!-- /.splash-content -->
+  </div><!-- /#splash-screen -->
 
   <!-- ═══════════════════════════════════════════════════
        AVISO PORTRAIT — Apenas em telemóvel vertical
@@ -254,6 +323,27 @@
        PONTO DE ENTRADA JS (ES Module)
        ═══════════════════════════════════════════════════ -->
   <script type="module" src="src/js/main.js"></script>
+
+  <!-- ═══════════════════════════════════════════════════
+       SPLASH SCREEN — Lógica de Lançamento
+       (script clássico para não bloquear o ES Module)
+       ═══════════════════════════════════════════════════ -->
+  <script>
+    (function () {
+      const splash = document.getElementById('splash-screen');
+      const btn    = document.getElementById('btn-launch');
+      if (!btn || !splash) return;
+
+      btn.addEventListener('click', function () {
+        // 1. Desencadeia o fade-out via CSS
+        splash.classList.add('hidden');
+        // 2. Remove completamente do DOM após a transição (800ms)
+        setTimeout(function () {
+          splash.remove();
+        }, 850);
+      });
+    })();
+  </script>
 
 </body>
 </html>

@@ -139,6 +139,7 @@ export function updatePhysics(dt) {
 
         let tension = tRope.k * stretch + tRope.damping * vStretch;
         if (tension < 0) tension = 0;
+        if (tension > 200) tension = 200; // CAP: carga de rotura HMPE para rebocador costeiro
         tRope.tension = tension;
 
         ropeForce.set(dirX * tension, dirZ * tension);
@@ -284,8 +285,9 @@ export function updatePhysics(dt) {
       const vBolZ = shipState.velocity.y + bGlobal_rX * shipState.angularVelocity;
       const vStretch = (0 - vBolX) * dirX + (0 - vBolZ) * dirZ; // cais estático
 
-      let tension = 400 * stretch + 800 * vStretch;
+      let tension = 60 * stretch + 250 * vStretch; // k=60 t/m, damp=250 — prev: 400/800 (explodia)
       if (tension < 0) tension = 0;
+      if (tension > 350) tension = 350;             // CAP: carga de rotura espia HMPE
       line.tension = tension;
 
       if (tension > 0) {
@@ -347,8 +349,11 @@ export function updatePhysics(dt) {
   shipForceGlobal.x += totalFx_local * sCosH - totalFz_local * sSinH;
   shipForceGlobal.y += totalFx_local * sSinH + totalFz_local * sCosH;
 
-  // Torque induzido (simplificação: Vento abeam centrado gera pouco torque puro, mas adicionamos drag angular pesado)
-  const angularDrag = -0.5125 * 50000 * shipState.angularVelocity * Math.abs(shipState.angularVelocity);
+  // Torque induzido por vento e corrente (drag angular hidrãulic)
+  // Amortecimento linear + quadrático: impede rotação descontrolada por corrente
+  const angularDrag =
+    -8000   * shipState.angularVelocity                                                     // linear  (dominante a ω baixo)
+    - 0.5125 * 50000 * shipState.angularVelocity * Math.abs(shipState.angularVelocity);     // quadrático
   shipTorque += angularDrag;
 
   // ── 7. Integração e Cinemática do Panamax ───────────────────
@@ -356,6 +361,11 @@ export function updatePhysics(dt) {
   shipState.velocity.x      += (shipForceGlobal.x / shipState.mass) * dt;
   shipState.velocity.y      += (shipForceGlobal.y / shipState.mass) * dt;
   shipState.angularVelocity += (shipTorque         / shipState.inertia) * dt;
+
+  // Hard cap na velocidade angular APÓS integração (≈3.4°/s — valor náutico plausível)
+  const MAX_SHIP_ANG_VEL = 0.06; // rad/s
+  if      (shipState.angularVelocity >  MAX_SHIP_ANG_VEL) shipState.angularVelocity =  MAX_SHIP_ANG_VEL;
+  else if (shipState.angularVelocity < -MAX_SHIP_ANG_VEL) shipState.angularVelocity = -MAX_SHIP_ANG_VEL;
 
   shipState.position.x += shipState.velocity.x * dt;
   shipState.position.y += shipState.velocity.y * dt;

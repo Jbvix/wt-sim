@@ -59,8 +59,8 @@ export function createTugData() {
       status:           0,
       lengthL0:         10.0,
       tension:          0,
-      k:                200,
-      damping:          400,
+      k:                18,    // t/m — cabo HMPE: 5m stretch → 90t (prev: 200 → explodia)
+      damping:          120,   // t·s/m — amortecimento crítico calibrado para mass=400t
       winchAction:      0,
       brakeEngaged:     true,
       winchSpeed:       2.0,

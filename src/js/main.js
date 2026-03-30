@@ -237,6 +237,14 @@ function initPhysicsDevTools() {
     devConfig.tugDragRot = v;
   });
 
+  const valTugThrust = document.getElementById('vcal-tug-thrust');
+  const inpTugThrust = document.getElementById('cal-tug-thrust');
+  inpTugThrust.addEventListener('input', (e) => {
+    const v = parseFloat(e.target.value);
+    valTugThrust.innerText = v.toFixed(1);
+    devConfig.tugThrustMultiplier = v;
+  });
+
   // Bindings Rope
   const valRopeK = document.getElementById('vcal-rope-k');
   const inpRopeK = document.getElementById('cal-rope-k');
@@ -412,14 +420,27 @@ function animate(timestamp) {
         const endPos = new THREE.Vector3();
         tRope.connectedBollard.getWorldPosition(endPos);
 
-        // Ponto de controle da Bézier — catenária simplificada
-        const sag   = Math.min(tRope.tension * 0.05, 5);
+        // Ponto de controle da Bézier — catenária invertida correta: Alta tensão = Sag 0.
+        // Se tension < 1, Sag = max (ex: 5). Se tension > 10, Sag = 0.
+        let sag = 5 - (tRope.tension * 0.5);
+        if (sag < 0) sag = 0; 
+        
         const half  = new THREE.Vector3().lerpVectors(startPos, endPos, 0.5);
         const ctrl  = new THREE.Vector3(half.x, Math.min(startPos.y, endPos.y) - sag, half.z);
         const curve = new THREE.QuadraticBezierCurve3(startPos, ctrl, endPos);
 
         const pts = curve.getPoints(20);
         tMeshes.ropeLine.geometry.setFromPoints(pts);
+
+        // Feedback de Tensão (Cores Rígidas)
+        if (tRope.tension > 150) {
+          tMeshes.ropeLine.material.color.setHex(0xff0000); // Risco Rotura Em Tempo Real
+        } else if (tRope.tension > 10) {
+          tMeshes.ropeLine.material.color.setHex(0xffff00); // Rígida e Tensa
+        } else {
+          tMeshes.ropeLine.material.color.setHex(0xffffff); // Frouxa / Normal
+        }
+
         tMeshes.ropeLine.visible = true;
 
       } else if (tRope.status === 0) {

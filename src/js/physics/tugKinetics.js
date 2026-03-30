@@ -19,15 +19,15 @@ import { updateBuoys } from '../graphics/buoys.js';
 // 1. CONSTANTES FÍSICAS
 // ─────────────────────────────────────────────────────────
 
-/** Força máxima de cada thruster (100% → thrustMultiplier N). */
-const THRUST_MULTIPLIER = 600;
+/** Força máxima de cada thruster (Bollard Pull Base x Multiplicador Real-time) */
+// (Descartado: const THRUST_MULTIPLIER = 600) -> Substituído por devConfig.tugThrustMultiplier
 
 /** Boost do binário de guinada (yaw) para os propulsores azimutais. */
 const STEERING_BOOST = 2.5;
 
 /** Coeficientes de drag local (por segundo). 1.0 = sem drag, 0.0 = para imediatamente. */
 const TUG_DRAG = { surge: 0.90, sway: 0.10, angular: 0.60 };
-const SHIP_DRAG = { surge: 0.99, sway: 0.50, angular: 0.40 };
+const SHIP_DRAG = { surge: 0.99, sway: 0.95, angular: 0.98 }; // Drag orgânico de Navios (Não afundam no mel)
 
 // ─────────────────────────────────────────────────────────
 // 2. INTEGRADOR PRINCIPAL
@@ -170,7 +170,8 @@ export function updatePhysics(dt) {
       const arrow = side === 'bb' ? tMeshes.jetArrowBB : tMeshes.jetArrowBE;
 
       if (t.thrust > 0) {
-        const force = t.thrust * THRUST_MULTIPLIER;
+        // Cada Thruster impulsiona até 80-100% * Multiplicador
+        const force = t.thrust * devConfig.tugThrustMultiplier * 100; // Se thrustMultiplier=0.8 e t.thrust=1.0 -> 80 Ton-Force
         const fX = force * Math.cos(t.angle);
         const fZ = force * Math.sin(t.angle);
 

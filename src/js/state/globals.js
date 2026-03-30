@@ -68,7 +68,8 @@ export const g = {
 // ── Dev Physics Live Override ────────────────────────────────
 export const devConfig = {
   ropeBreak: 200, // Ton
-  tugDragRot: 0.96 // Angular Drag per dt
+  tugDragRot: 0.96, // Angular Drag per dt
+  tugThrustMultiplier: 0.8 // 100% Throttle = 80 Ton-Force (Real Bollard Pull)
 };
 
 // ─────────────────────────────────────────────────────────

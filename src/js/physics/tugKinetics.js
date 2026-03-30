@@ -13,6 +13,7 @@ import * as THREE from 'three';
 import { g, shipState, envState, mooringLines } from '../state/globals.js';
 import { tugs } from '../fleet/tugData.js';
 import { checkCollisions } from './collision.js';
+import { updateBuoys } from '../graphics/buoys.js';
 
 // ─────────────────────────────────────────────────────────
 // 1. CONSTANTES FÍSICAS
@@ -366,11 +367,14 @@ export function updatePhysics(dt) {
     g.merchantShip.rotation.y = shipState.heading;
   }
 
-  // ── 8. Colisões ───────────────────────────────────────
+  // ── 8. Boias — Física de Inclinação ──────────────────
+  updateBuoys(dt);
+
+  // ── 9. Colisões ────────────────────────────────────
 
   checkCollisions();
 
-  // ── 9. Telemetria HUD ─────────────────────────────────
+  // ── 10. Telemetria HUD ─────────────────────────────
 
   if (!g.ropeState) return;
 

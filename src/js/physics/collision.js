@@ -140,5 +140,36 @@ export function checkCollisions() {
         }
       }
     }
+
+    // ── C. Rebocador vs. Boias Náuticas ─────────────────
+
+    if (g.buoys) {
+      g.buoys.forEach(b => {
+        const bdx  = ts.position.x - b.position.x;
+        const bdz  = ts.position.y - b.position.z;
+        const bDist = Math.hypot(bdx, bdz);
+        const minDist = b.radius + TUG_RADIUS;
+
+        if (bDist < minDist && bDist > 0.01) {
+          // Resolve penetração — empurra o rebocador para fora da boia
+          const penetration = minDist - bDist;
+          const nx = bdx / bDist;
+          const nz = bdz / bDist;
+
+          ts.position.x += nx * penetration;
+          ts.position.y += nz * penetration;
+
+          // Impulso de ricochete amortecido
+          const vDotN = ts.velocity.x * nx + ts.velocity.y * nz;
+          if (vDotN < 0) {
+            ts.velocity.x -= 1.3 * vDotN * nx;
+            ts.velocity.y -= 1.3 * vDotN * nz;
+            if (Math.abs(vDotN) > 0.3) {
+              showCrashWarning('⚠️ BOIA ATINGIDA! Atenção à Sinalização!');
+            }
+          }
+        }
+      });
+    }
   });
 }

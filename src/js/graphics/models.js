@@ -11,6 +11,7 @@
 import * as THREE from 'three';
 import { g, shipState, mooringLines } from '../state/globals.js';
 import { tugs } from '../fleet/tugData.js';
+import { createBuoys } from './buoys.js';
 
 // ─────────────────────────────────────────────────────────
 // 1. GEOMETRIAS PARTILHADAS (definidas uma vez, reutilizadas)
@@ -340,4 +341,7 @@ export function buildWorld() {
     line.ropeLine.visible = false;
     g.scene.add(line.ropeLine);
   });
+
+  // ── H. Boias Náuticas do Canal de Manobra ─────────────
+  createBuoys();
 }

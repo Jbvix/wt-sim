@@ -49,6 +49,7 @@ export const g = {
   hitboxes:      [],  /** @type {THREE.Mesh[]} Hitboxes clicáveis */
   navLights:     [],  /** @type {THREE.PointLight[]} Luzes de navegação */
   pierBollards:  [],  /** @type {Array<{x:number, ref:THREE.Mesh}>} Cabeços do cais */
+  buoys:         [],  /** @type {Array<{id,position,pivot,mesh,radius}>} Boias náuticas */
 
   // Controle da frota
   activeTugId:    'stern',  /** @type {'stern'|'bow'} */

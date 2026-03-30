@@ -166,6 +166,102 @@ function initDevTools() {
   }, 1000);
 }
 
+// ── Dev Tool Física (Painel de Massas e Molas) ───────────
+function initPhysicsDevTools() {
+  const pPanel  = document.getElementById('dev-physics-panel');
+  const pHandle = document.getElementById('dev-phys-drag-handle');
+  const pBtnMin = document.getElementById('dev-phys-btn-min');
+  const pContent = document.getElementById('dev-phys-content');
+
+  if (!pPanel) return;
+
+  // Draggable Física
+  let pDragging = false, pStartX, pStartY, pInitLeft, pInitTop;
+  pHandle.addEventListener('mousedown', (e) => {
+    if (e.target.tagName.toLowerCase() === 'button') return;
+    pDragging = true;
+    pStartX = e.clientX; pStartY = e.clientY;
+    const r = pPanel.getBoundingClientRect();
+    pInitLeft = r.left; pInitTop = r.top;
+    pPanel.style.right = 'auto'; pPanel.style.bottom = 'auto';
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!pDragging) return;
+    pPanel.style.left = `${pInitLeft + (e.clientX - pStartX)}px`;
+    pPanel.style.top  = `${pInitTop + (e.clientY - pStartY)}px`;
+  });
+  window.addEventListener('mouseup', () => { pDragging = false; });
+
+  // Toggle Minimize
+  pBtnMin.addEventListener('click', () => {
+    if (pContent.style.display === 'none') {
+      pContent.style.display = 'block';
+      pBtnMin.innerText = '[ - ]';
+    } else {
+      pContent.style.display = 'none';
+      pBtnMin.innerText = '[ + ]';
+    }
+  });
+
+  // Bindings Ship
+  const valShipMass = document.getElementById('vcal-ship-mass');
+  const inpShipMass = document.getElementById('cal-ship-mass');
+  inpShipMass.addEventListener('input', (e) => {
+    const v = parseFloat(e.target.value);
+    valShipMass.innerText = v;
+    shipState.mass = v;
+  });
+
+  const valShipInertia = document.getElementById('vcal-ship-inertia');
+  const inpShipInertia = document.getElementById('cal-ship-inertia');
+  inpShipInertia.addEventListener('input', (e) => {
+    const v = parseFloat(e.target.value);
+    valShipInertia.innerText = v;
+    shipState.inertia = v * 1_000_000;
+  });
+
+  // Bindings Tug
+  const valTugMass = document.getElementById('vcal-tug-mass');
+  const inpTugMass = document.getElementById('cal-tug-mass');
+  inpTugMass.addEventListener('input', (e) => {
+    const v = parseFloat(e.target.value);
+    valTugMass.innerText = v;
+    Object.values(tugs).forEach(t => t.state.mass = v);
+  });
+
+  const valTugDrag = document.getElementById('vcal-tug-drag');
+  const inpTugDrag = document.getElementById('cal-tug-drag');
+  inpTugDrag.addEventListener('input', (e) => {
+    const v = parseFloat(e.target.value);
+    valTugDrag.innerText = v.toFixed(2);
+    devConfig.tugDragRot = v;
+  });
+
+  // Bindings Rope
+  const valRopeK = document.getElementById('vcal-rope-k');
+  const inpRopeK = document.getElementById('cal-rope-k');
+  inpRopeK.addEventListener('input', (e) => {
+    const v = parseFloat(e.target.value);
+    valRopeK.innerText = v;
+    Object.values(tugs).forEach(t => t.rope.k = v);
+  });
+
+  const valRopeB = document.getElementById('vcal-rope-b');
+  const inpRopeB = document.getElementById('cal-rope-b');
+  inpRopeB.addEventListener('input', (e) => {
+    const v = parseFloat(e.target.value);
+    valRopeB.innerText = v;
+    Object.values(tugs).forEach(t => t.rope.damping = v);
+  });
+
+  const valRopeCap = document.getElementById('vcal-rope-cap');
+  const inpRopeCap = document.getElementById('cal-rope-cap');
+  inpRopeCap.addEventListener('input', (e) => {
+    const v = parseFloat(e.target.value);
+    valRopeCap.innerText = v;
+    devConfig.ropeBreak = v;
+  });
+}
 
 // ─────────────────────────────────────────────────────────
 // 1. INICIALIZAÇÃO
@@ -207,12 +303,18 @@ async function init() {
   // Ativa o rebocador de popa como padrão e prepara o cenário
   switchTug('stern');
   setupDockedScenario();
+  
+  // Painel de Físicas
+  initPhysicsDevTools();
 
   // 3. Aguarda clique do utilizador para iniciar a Física e Renderização 
   window.startSimulation = function () {
     console.log('DEBUG: START SIMULATION clicado. Loop iniciado.');
     const devPanel = document.getElementById('dev-calibration-panel');
+    const physPanel = document.getElementById('dev-physics-panel');
     if (devPanel) devPanel.style.display = 'block';
+    if (physPanel) physPanel.style.display = 'block';
+    
     g.lastTime = performance.now(); // reset para o dt não dar salto
     requestAnimationFrame(animate);
   };

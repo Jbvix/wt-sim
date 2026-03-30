@@ -10,7 +10,7 @@
  */
 
 import * as THREE from 'three';
-import { g, shipState, envState, mooringLines } from '../state/globals.js';
+import { g, shipState, envState, mooringLines, devConfig } from '../state/globals.js';
 import { tugs } from '../fleet/tugData.js';
 import { checkCollisions } from './collision.js';
 import { updateBuoys } from '../graphics/buoys.js';
@@ -139,7 +139,7 @@ export function updatePhysics(dt) {
 
         let tension = tRope.k * stretch + tRope.damping * vStretch;
         if (tension < 0) tension = 0;
-        if (tension > 200) tension = 200; // CAP: carga de rotura HMPE para rebocador costeiro
+        if (tension > devConfig.ropeBreak) tension = devConfig.ropeBreak; // CAP: carga de rotura HMPE em tempo real
         tRope.tension = tension;
 
         ropeForce.set(dirX * tension, dirZ * tension);
@@ -217,9 +217,9 @@ export function updatePhysics(dt) {
 
     // ── 3d. Integração do Rebocador ───────────────────────
 
-    // Força local → global
-    const gFX = (tugForceX * cosH + tugForceZ * sinH) + ropeForce.x + tWX;
-    const gFZ = (-tugForceX * sinH + tugForceZ * cosH) + ropeForce.y + tWZ;
+    // Força local → global. CORREÇÃO NA MATRIZ: R(h)*F_local
+    const gFX = (tugForceX * cosH - tugForceZ * sinH) + ropeForce.x + tWX;
+    const gFZ = (tugForceX * sinH + tugForceZ * cosH) + ropeForce.y + tWZ;
 
     tState.velocity.x        += (gFX / tState.mass) * dt;
     tState.velocity.y        += (gFZ / tState.mass) * dt;
@@ -228,14 +228,16 @@ export function updatePhysics(dt) {
     // Drag hidrodinâmico no referencial local
     const vRelX    = tState.velocity.x - curX;
     const vRelZ    = tState.velocity.y - curZ;
+    // vLocal = R(-h)*vGlobal (Inverso)
     const vLocalX  = vRelX * cosH + vRelZ * sinH;
     const vLocalZ  = -vRelX * sinH + vRelZ * cosH;
 
     const dampedLX = vLocalX * Math.pow(TUG_DRAG.surge,   dt);
     const dampedLZ = vLocalZ * Math.pow(TUG_DRAG.sway,    dt);
+    // Volta a converter a velocidade amortecida para Global: R(h)*vLocal_amortecido
     tState.velocity.x        = (dampedLX * cosH - dampedLZ * sinH) + curX;
     tState.velocity.y        = (dampedLX * sinH + dampedLZ * cosH) + curZ;
-    tState.angularVelocity  *= Math.pow(TUG_DRAG.angular, dt);
+    tState.angularVelocity  *= Math.pow(devConfig.tugDragRot, dt);
   });
 
   // ── 4. Atualiza posições e meshes dos rebocadores ─────

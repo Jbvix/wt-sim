@@ -372,9 +372,56 @@
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════════════════
+       PAINEL FÍSICO (DEV TOOL TEMPORÁRIA)
+       ═══════════════════════════════════════════════════ -->
+  <div id="dev-physics-panel" class="panel" style="display: none; position: absolute; top: 70px; left: 10px; z-index: 9999; width: 320px; font-size: 0.8rem; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+    <div id="dev-phys-drag-handle" style="background: rgba(14, 165, 233, 0.2); padding: 8px; margin: -10px -10px 10px -10px; border-bottom: 1px solid #0ea5e9; font-weight: bold; color: #0ea5e9; cursor: move; display: flex; justify-content: space-between;">
+      <span>⚙️ Motor de Física Clássica</span>
+      <button id="dev-phys-btn-min" style="background: none; border: none; color: #0ea5e9; cursor: pointer; font-weight: bold;">[ - ]</button>
+    </div>
+    
+    <div id="dev-phys-content">
+      <h4 style="margin: 5px 0; color: #38bdf8; border-bottom: 1px solid #336;">A. Panamax (Porta-Contentores)</h4>
+      <div style="margin-bottom: 10px;">
+        <label>Massa: <span id="vcal-ship-mass">65000</span> Ton</label>
+        <input type="range" id="cal-ship-mass" min="5000" max="150000" step="1000" value="65000" style="width: 100%;">
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label>Inércia (Y): <span id="vcal-ship-inertia">275</span> Milhões kg.m²</label>
+        <input type="range" id="cal-ship-inertia" min="10" max="800" step="5" value="275" style="width: 100%;">
+      </div>
+
+      <h4 style="margin: 15px 0 5px 0; color: #38bdf8; border-bottom: 1px solid #336;">B. Rebocador Ativo (ASD)</h4>
+      <div style="margin-bottom: 10px;">
+        <label>Massa: <span id="vcal-tug-mass">400</span> Ton</label>
+        <input type="range" id="cal-tug-mass" min="50" max="1500" step="10" value="400" style="width: 100%;">
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label>Drag Rotacional: <span id="vcal-tug-drag">0.96</span></label>
+        <input type="range" id="cal-tug-drag" min="0.80" max="0.99" step="0.01" value="0.96" style="width: 100%;">
+      </div>
+
+      <h4 style="margin: 15px 0 5px 0; color: #38bdf8; border-bottom: 1px solid #336;">C. Cabos HMPE (Guincho)</h4>
+      <div style="margin-bottom: 10px;">
+        <label>Constante Elástica (k): <span id="vcal-rope-k">60</span> t/m</label>
+        <input type="range" id="cal-rope-k" min="5" max="500" step="5" value="60" style="width: 100%;">
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label>Amortecimento (B): <span id="vcal-rope-b">150</span> t.s/m</label>
+        <input type="range" id="cal-rope-b" min="0" max="500" step="10" value="150" style="width: 100%;">
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label>Carga Rotura (Max T): <span id="vcal-rope-cap">200</span> Ton</label>
+        <input type="range" id="cal-rope-cap" min="50" max="800" step="10" value="200" style="width: 100%;">
+      </div>
+    </div>
+  </div>
+
 
   <!-- ═══════════════════════════════════════════════════
        PONTO DE ENTRADA JS (ES Module)
+
        ═══════════════════════════════════════════════════ -->
   <script type="module" src="src/js/main.js"></script>
 

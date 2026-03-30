@@ -65,6 +65,12 @@ export const g = {
   lastTime: 0,
 };
 
+// ── Dev Physics Live Override ────────────────────────────────
+export const devConfig = {
+  ropeBreak: 200, // Ton
+  tugDragRot: 0.96 // Angular Drag per dt
+};
+
 // ─────────────────────────────────────────────────────────
 // 2. ESTADO FÍSICO DO NAVIO MERCANTE (Panamax Dead-Ship)
 // ─────────────────────────────────────────────────────────

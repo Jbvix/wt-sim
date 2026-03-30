@@ -55,7 +55,7 @@ export function loadAllAssets() {
 
     // 3. Encomendamos o Navio
     loader.load(
-      'assets/container ship/container_ship.glb',
+      'Assets/container ship/container_ship.glb',
       (gltf) => {
         modelsCache.containerShip = gltf.scene;
       }
@@ -63,7 +63,7 @@ export function loadAllAssets() {
 
     // 4. Encomendamos o Rebocador ASD
     loader.load(
-      'assets/tugboat/boat_ff_v2.glb',
+      'Assets/tugboat/boat_ff_v2.glb',
       (gltf) => {
         modelsCache.tugboat = gltf.scene;
       }

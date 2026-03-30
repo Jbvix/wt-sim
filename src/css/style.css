@@ -575,6 +575,20 @@ body, html {
   transform: translateY(0) scale(0.98);
 }
 
+.splash-launch:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.splash-launch:disabled::before {
+  animation: none;
+  background: none;
+}
+
+
 .btn-launch-arrow {
   width: 20px;
   height: 20px;

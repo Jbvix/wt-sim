@@ -14,6 +14,7 @@ import { g, shipState, mooringLines, raycaster, mouse, pointerDownPos } from './
 import { tugs }                from './fleet/tugData.js';
 import { switchTug, setupFleetManager } from './fleet/fleetManager.js';
 import { setupGraphics, onWindowResize } from './graphics/scene.js';
+import { loadAllAssets }       from './graphics/assets.js';
 import { buildWorld }          from './graphics/models.js';
 import { updatePhysics }       from './physics/tugKinetics.js';
 import { setupJoysticks }      from './ui/joysticks.js';
@@ -25,17 +26,115 @@ import {
   animateCurrentCompass,
 } from './ui/envPanel.js';
 
+// ── Dev Tool Temporária ──────────────────────────────────
+function initDevTools() {
+  const select = document.getElementById('dev-target-select');
+  const rx = document.getElementById('dev-range-x');
+  const ry = document.getElementById('dev-range-y');
+  const rz = document.getElementById('dev-range-z');
+  const vx = document.getElementById('dev-val-x');
+  const vy = document.getElementById('dev-val-y');
+  const vz = document.getElementById('dev-val-z');
+  const out = document.getElementById('dev-output');
+
+  if (!select) return;
+
+  // Enche a dropdown com todos os cabeços dinâmicos (navio)
+  const shipBollards = g.hitboxes.filter(h => h.userData.isDynamic);
+  
+  select.innerHTML = '<option value="tug-winch">Rebocador Ativo - Guincho</option>';
+  shipBollards.forEach(h => {
+    let name = h.userData.mooringId || h.userData.type + ' (Cabeço Navio)';
+    select.innerHTML += `<option value="${h.uuid}">${name}</option>`;
+  });
+
+  let currentTarget = null;
+  let targetType = 'tug-winch';
+
+  function updateTarget() {
+    targetType = select.value;
+    if (targetType === 'tug-winch') {
+      const tug = tugs[g.activeTugId];
+      if (tug && tug.meshes.winchDrum) {
+        currentTarget = tug.meshes.winchDrum;
+      }
+    } else {
+      currentTarget = g.hitboxes.find(h => h.uuid === targetType);
+    }
+
+    if (currentTarget) {
+      rx.value = currentTarget.position.x;
+      ry.value = currentTarget.position.y;
+      rz.value = currentTarget.position.z;
+      updateText();
+    }
+  }
+
+  function updateText() {
+    vx.innerText = rx.value;
+    vy.innerText = ry.value;
+    vz.innerText = rz.value;
+    out.innerText = `x: ${rx.value}, y: ${ry.value}, z: ${rz.value}`;
+  }
+
+  function onSliderChange() {
+    if (!currentTarget) return;
+    
+    const x = parseFloat(rx.value);
+    const y = parseFloat(ry.value);
+    const z = parseFloat(rz.value);
+
+    // Ajustar malha
+    currentTarget.position.set(x, y, z);
+
+    // Se é guincho, arrastar também a parent hitchbox (se for possível achar)
+    if (targetType === 'tug-winch') {
+      const tug = tugs[g.activeTugId];
+      // A hitbox do guincho é uma SphereGeometry nas children do rebocador Group
+      if (tug && tug.meshes.tugboat) {
+         const winchHit = tug.meshes.tugboat.children.find(c => c.userData.type === 'winch');
+         if (winchHit) winchHit.position.set(x, y, z);
+      }
+    } else {
+      // Se é um cabeço (Navio), arrastar também a mesh visual correspondente (que está em userData.ref)
+      if (currentTarget.userData && currentTarget.userData.ref) {
+        currentTarget.userData.ref.position.set(x, y, z);
+      }
+    }
+
+    updateText();
+  }
+
+  select.addEventListener('change', updateTarget);
+  rx.addEventListener('input', onSliderChange);
+  ry.addEventListener('input', onSliderChange);
+  rz.addEventListener('input', onSliderChange);
+
+  // Inicializa com delay para garantir que o mundo está construído
+  setTimeout(updateTarget, 1000);
+}
+
 // ─────────────────────────────────────────────────────────
 // 1. INICIALIZAÇÃO
 // ─────────────────────────────────────────────────────────
 
 /**
- * Ponto de entrada — inicializa todos os subsistemas e arranca o loop de animação.
- * Chamado uma única vez pelo DOMContentLoaded.
+ * Ponto de entrada — carrega os assets, inicializa todos os subsistemas e aguarda 
+ * o Botão "Lançar Simulação" para arrancar o loop de renderização e física.
  */
-function init() {
-  console.log('DEBUG: INIT INICIOU');
+async function init() {
+  console.log('DEBUG: Iniciando Pré-Load de Assets...');
 
+  try {
+    // 1. Aguarda que o Loader Manager (96MB de ficheiros GLB) termine
+    await loadAllAssets();
+    console.log('DEBUG: Pré-load concluído. Instanciando Mundo...');
+  } catch (error) {
+    document.getElementById('launch-text').innerText = 'ERRO NO DOWNLOAD (F5)';
+    return;
+  }
+
+  // 2. Monta o cenário base na memória
   setupGraphics();
   buildWorld();
   setupJoysticks();
@@ -45,6 +144,9 @@ function init() {
   setupFleetManager();
   setupEventListeners();
 
+  // Iniciar Painel DEV
+  initDevTools();
+
   // Referências DOM para a bússola de corrente
   g.uiCurrentCompass = document.getElementById('current-compass');
   g.uiCurrentArrow   = document.getElementById('current-arrow');
@@ -53,8 +155,12 @@ function init() {
   switchTug('stern');
   setupDockedScenario();
 
-  requestAnimationFrame(animate);
-  console.log('DEBUG: INIT TERMINOU');
+  // 3. Aguarda clique do utilizador para iniciar a Física e Renderização 
+  window.startSimulation = function () {
+    console.log('DEBUG: START SIMULATION clicado. Loop iniciado.');
+    g.lastTime = performance.now(); // reset para o dt não dar salto
+    requestAnimationFrame(animate);
+  };
 }
 
 // ─────────────────────────────────────────────────────────

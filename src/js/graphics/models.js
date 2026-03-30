@@ -12,6 +12,7 @@ import * as THREE from 'three';
 import { g, shipState, mooringLines } from '../state/globals.js';
 import { tugs } from '../fleet/tugData.js';
 import { createBuoys } from './buoys.js';
+import { modelsCache } from './assets.js';
 
 // ─────────────────────────────────────────────────────────
 // 1. GEOMETRIAS PARTILHADAS (definidas uma vez, reutilizadas)
@@ -73,25 +74,64 @@ function createTugboatMesh(tugId, colorHex) {
   const group  = new THREE.Group();
   const meshes = {};
 
-  // ── Casco ──────────────────────────────────────────────
-  const hull = new THREE.Mesh(
-    new THREE.BoxGeometry(32, 6, 12),
-    new THREE.MeshStandardMaterial({ color: colorHex })
-  );
-  hull.position.y = 3;
-  hull.castShadow = true;
-  group.add(hull);
-  meshes.hull = hull;
+  // ── Casco e Superestrutura (Modelo GLB ou Primitivas) ──
+  if (modelsCache.tugboat) {
+    const tugModel = modelsCache.tugboat.clone();
 
-  // ── Superestrutura (Cabine) ─────────────────────────────
-  const cabin = new THREE.Mesh(
-    new THREE.BoxGeometry(10, 6, 8),
-    new THREE.MeshStandardMaterial({ color: 0xffffff })
-  );
-  cabin.position.set(-5, 6 + 3, 0);
-  cabin.castShadow = true;
-  group.add(cabin);
-  meshes.cabin = cabin;
+    // Aplica sombras
+    tugModel.traverse((child) => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+
+    // Medir dimensões brutas para forçar comprimento de 32 metros
+    const box = new THREE.Box3().setFromObject(tugModel);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+
+    const isZLong = size.z > size.x;
+    const rawLength = isZLong ? size.z : size.x;
+    const scale = 32 / rawLength;
+    tugModel.scale.set(scale, scale, scale);
+
+    if (isZLong) {
+      tugModel.rotation.y = Math.PI / 2;
+    }
+
+    const scaledBox = new THREE.Box3().setFromObject(tugModel);
+    const center = new THREE.Vector3();
+    scaledBox.getCenter(center);
+
+    // O fundo do casco fica submerso. Assumimos um calado de -1.5m para visual
+    tugModel.position.set(-center.x, -scaledBox.min.y - 1.5, -center.z);
+
+    const visualGroup = new THREE.Group();
+    visualGroup.add(tugModel);
+    group.add(visualGroup);
+    meshes.hull = visualGroup; // Fallback ref
+
+  } else {
+    // ── Fallback Primitivas ────────────────────────────────
+    const hull = new THREE.Mesh(
+      new THREE.BoxGeometry(32, 6, 12),
+      new THREE.MeshStandardMaterial({ color: colorHex })
+    );
+    hull.position.y = 3;
+    hull.castShadow = true;
+    group.add(hull);
+    meshes.hull = hull;
+
+    const cabin = new THREE.Mesh(
+      new THREE.BoxGeometry(10, 6, 8),
+      new THREE.MeshStandardMaterial({ color: 0xffffff })
+    );
+    cabin.position.set(-5, 6 + 3, 0);
+    cabin.castShadow = true;
+    group.add(cabin);
+    meshes.cabin = cabin;
+  }
 
   // ── Guincho de Proa ────────────────────────────────────
   const winchBase = new THREE.Mesh(
@@ -248,23 +288,63 @@ export function buildWorld() {
 
   g.merchantShip = new THREE.Group();
 
-  // E.1 Casco (225 m × 14 m × 32 m)
-  const shipHull = new THREE.Mesh(
-    new THREE.BoxGeometry(225, 14, 32),
-    new THREE.MeshStandardMaterial({ color: 0x1e3a8a })
-  );
-  shipHull.position.y = 7; // Flutua com metade do casco abaixo de y=0
-  shipHull.castShadow = true;
-  g.merchantShip.add(shipHull);
+  // E.1 & E.2 Modelo GLB do Porta-Contentores
+  if (modelsCache.containerShip) {
+    const shipModel = modelsCache.containerShip.clone();
 
-  // E.2 Superestrutura (20 m de largura — cabeços em z=±14 ficam visíveis)
-  const shipCabin = new THREE.Mesh(
-    new THREE.BoxGeometry(32, 12, 20),
-    new THREE.MeshStandardMaterial({ color: 0xffffff })
-  );
-  shipCabin.position.set(-90, 14 + 6, 0); // Zona de popa, centro em x=-90
-  shipCabin.castShadow = true;
-  g.merchantShip.add(shipCabin);
+    // Habilita sombras e corrige materiais
+    shipModel.traverse((child) => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+
+    // Medir as dimensões brutas do modelo
+    const box = new THREE.Box3().setFromObject(shipModel);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+
+    // Identificar o eixo longitudinal (maior) e calcular escala para 225 metros
+    const isZLong = size.z > size.x;
+    const rawLength = isZLong ? size.z : size.x;
+    const scale = 225 / rawLength;
+    shipModel.scale.set(scale, scale, scale);
+
+    // Alinhar ao eixo X físico se o modelo vier alinhado com Z
+    if (isZLong) {
+      shipModel.rotation.y = Math.PI / 2;
+    }
+
+    // Recalcular a Box atual após a escala e rotação para centralizar
+    const scaledBox = new THREE.Box3().setFromObject(shipModel);
+    const center = new THREE.Vector3();
+    scaledBox.getCenter(center);
+    
+    // Alinha o pivô ao centro X,Z. O navio fica com o fundo abaixo de Y=0 para afundar na água.
+    shipModel.position.set(-center.x, -scaledBox.min.y - 4, -center.z); // -4 calado forçado
+
+    const visualGroup = new THREE.Group();
+    visualGroup.add(shipModel);
+    g.merchantShip.add(visualGroup);
+  } else {
+    // Fallback Geometrias Primitivas (se falhar carregamento)
+    const shipHull = new THREE.Mesh(
+      new THREE.BoxGeometry(225, 14, 32),
+      new THREE.MeshStandardMaterial({ color: 0x1e3a8a })
+    );
+    shipHull.position.y = 7;
+    shipHull.castShadow = true;
+    g.merchantShip.add(shipHull);
+
+    const shipCabin = new THREE.Mesh(
+      new THREE.BoxGeometry(32, 12, 20),
+      new THREE.MeshStandardMaterial({ color: 0xffffff })
+    );
+    shipCabin.position.set(-90, 14 + 6, 0);
+    shipCabin.castShadow = true;
+    g.merchantShip.add(shipCabin);
+  }
 
   // E.3 Cabeços de Amarração — BB (cais) e BE (mar)
   const mooringPositions = [

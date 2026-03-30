@@ -1,18 +1,28 @@
 /**
  * @file        src/js/graphics/buoys.js
- * @description Boias náuticas de canal (CEVNI): geometria 3D e física de
- *              inclinação por vento e corrente.
- *              - 3 Boias Verdes  → Bombordo (esquerda do canal de entrada)
- *              - 3 Boias Encarnadas → Estibordo (direita do canal de entrada)
+ * @description Boias náuticas de canal (CEVNI) com física de inclinação.
+ *
+ *  Layout náutico do mundo WT-SIM (eixo Z = distância ao cais):
+ *
+ *    Z ≤ -10   ── Cáis / Pír
+ *    Z 0–50    ── Área de atracagem (Panamax em Z≈11)
+ *    Z 50–260  ── BACIA DE EVOLUÇÃO (diâmetro ~200 m)
+ *    Z 260–460 ── CANAL DE SAÍDA — demarcado pelas boias
+ *
+ *  Posicionamento das 6 boias (3 pares):
+ *    Par 1  Z=280   Boca do canal (saída da bacia) — separação lateral ±85 m
+ *    Par 2  Z=370   Canal intermediário              — separação lateral ±60 m
+ *    Par 3  Z=460   Canal ao largo                    — separação lateral ±60 m
+ *
+ *  Convenção de cores (navegação de entrada = diminui Z):
+ *    Encarnadas (vermelho)  → lado de estibordo (X positivo)
+ *    Verdes                 → lado de bombordo  (X negativo)
  *
  *              Modelo físico de inclinação:
- *              A força resultante (corrente dominante + 30% do vento) inclina
- *              o pivot da boia na direção do fluxo. A inclinação máxima é ~55°
- *              (π × 0.31 rad), atingida com ventos/correntes de ~6 m/s (≈11 kn).
- *              A transição é suavizada por interpolação linear exponencial.
+ *              Corrente (dominante) + 30% vento → tilt até ~55° (PI×0.31 rad).
  *
  * @author      Jossian Brito <jossiancosta@gmail.com>
- * @version     2.0.0
+ * @version     2.1.0
  * @since       2026-03-29
  */
 
@@ -25,14 +35,25 @@ import { g, envState } from '../state/globals.js';
 
 /** @type {Array<{id:string, color:number, topColor:number, x:number, z:number}>} */
 const BUOY_DEFS = [
-  // Verdes — Bombordo (lado esquerdo do canal de entrada)
-  { id: 'green-1', color: 0x00bb44, topColor: 0x00ff66, x: -120, z: 55 },
-  { id: 'green-2', color: 0x00bb44, topColor: 0x00ff66, x:    0, z: 55 },
-  { id: 'green-3', color: 0x00bb44, topColor: 0x00ff66, x:  120, z: 55 },
-  // Encarnadas — Estibordo (lado direito do canal de entrada)
-  { id: 'red-1',   color: 0xcc1111, topColor: 0xff3333, x: -120, z: 75 },
-  { id: 'red-2',   color: 0xcc1111, topColor: 0xff3333, x:    0, z: 75 },
-  { id: 'red-3',   color: 0xcc1111, topColor: 0xff3333, x:  120, z: 75 },
+  //
+  // Convenção IALA de entrada (navegar em direção ao porto = Z decrescente):
+  //   Bombordo da embarcação entrante = X negativo (verdes)
+  //   Estibordo da embarcação entrante = X positivo (encarnadas)
+  //
+  // ── Par 1: Boca do Canal (saída da Bacia de Evolução) ─ Z = 280 m ──────
+  // Maior separação lateral (±85 m) para guiar a saída da bacia ampla (~200 m Ø)
+  { id: 'green-1', color: 0x00bb44, topColor: 0x00ff66, x: -85, z: 280 },
+  { id: 'red-1',   color: 0xcc1111, topColor: 0xff3333, x: +85, z: 280 },
+
+  // ── Par 2: Canal Intermediário ─ Z = 370 m ──────────────────────────
+  // Canal estreita (±60 m) indicando a navegação confinada ao canal
+  { id: 'green-2', color: 0x00bb44, topColor: 0x00ff66, x: -60, z: 370 },
+  { id: 'red-2',   color: 0xcc1111, topColor: 0xff3333, x: +60, z: 370 },
+
+  // ── Par 3: Canal ao Largo ─ Z = 460 m ────────────────────────────
+  // Mantido o mesmo gabarito (±60 m) — canal regular até àgua aberta
+  { id: 'green-3', color: 0x00bb44, topColor: 0x00ff66, x: -60, z: 460 },
+  { id: 'red-3',   color: 0xcc1111, topColor: 0xff3333, x: +60, z: 460 },
 ];
 
 // ─────────────────────────────────────────────────────────

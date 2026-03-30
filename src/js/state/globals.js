@@ -70,7 +70,7 @@ export const g = {
 // ─────────────────────────────────────────────────────────
 
 /**
- * Estado cinemático e de controle do navio mercante.
+ * Estado cinemático e de controle do Porta-Contentores.
  * Posição em metros no plano (X, Z) — Z positivo = lado do mar.
  */
 export const shipState = {
@@ -78,8 +78,8 @@ export const shipState = {
   velocity:        new THREE.Vector2(0, 0),
   heading:         0,           // radianos
   angularVelocity: 0,
-  mass:            5000,        // toneladas simuladas
-  inertia:         20_000_000,  // inércia proporcional escalada
+  mass:            65000,       // toneladas (Porta-Contentores Carregado)
+  inertia:         275_000_000, // I = (1/12) * m * (L^2 + B^2) -> 1/12 * 65000 * (225^2 + 32^2)
   engineThrust:    0,           // -100 a +100 (% telegrafo)
   rudderAngle:     0,           // -35 a +35 graus
 };

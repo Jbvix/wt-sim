@@ -181,7 +181,7 @@ export function updatePhysics(dt) {
 
         if (arrow) {
           arrow.setDirection(new THREE.Vector3(-Math.cos(t.angle), 0, -Math.sin(t.angle)).normalize());
-          arrow.setLength(t.thrust * 12);
+          arrow.setLength(t.thrust * 12, 3, 2); // Mantém a cabeça da seta estática (visível) mesmo sob pouco Thrust
           arrow.visible = true;
         }
       } else {
@@ -194,7 +194,7 @@ export function updatePhysics(dt) {
       const mag = Math.hypot(tugForceX, tugForceZ);
       if (mag > 0) {
         tMeshes.resultantArrow.setDirection(new THREE.Vector3(tugForceX, 0, tugForceZ).normalize());
-        tMeshes.resultantArrow.setLength(mag / 4);
+        tMeshes.resultantArrow.setLength(mag / 12, 4, 3); // Reduzida significativamente a poluição visual geométrica
         tMeshes.resultantArrow.visible = true;
       } else {
         tMeshes.resultantArrow.visible = false;

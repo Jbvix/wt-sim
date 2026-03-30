@@ -43,6 +43,28 @@
 <body>
 
   <!-- ═════════════════════════════════════════════════════
+       ERROS DE SISTEMA (DEV)
+       ═══════════════════════════════════════════════════ -->
+  <div id="error-log" style="display:none; position:fixed; top:10px; left:10px; width:90%; max-height:400px; overflow:auto; background:rgba(255,0,0,0.9); color:white; font-family:monospace; font-size:12px; z-index:99999; padding:15px; border-radius:8px; border:2px solid white;"></div>
+
+  <script>
+    window.onerror = function(msg, url, line, col, error) {
+      const errEl = document.getElementById('error-log');
+      if (errEl) {
+        errEl.style.display = 'block';
+        errEl.innerText += `\n[GLOBAL CRASH] ${msg}\nLinha: ${line}\nErro completo: ${error?.stack || error}`;
+      }
+    };
+    window.addEventListener('unhandledrejection', function(event) {
+      const errEl = document.getElementById('error-log');
+      if (errEl) {
+        errEl.style.display = 'block';
+        errEl.innerText += `\n[PROMISE REJECTED] ${event.reason?.message || event.reason}\n${event.reason?.stack}`;
+      }
+    });
+  </script>
+
+  <!-- ═════════════════════════════════════════════════════
        TELA INICIAL (SPLASH SCREEN)
        ═══════════════════════════════════════════════════ -->
   <div id="splash-screen">

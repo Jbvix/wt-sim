@@ -211,6 +211,8 @@ async function init() {
   // 3. Aguarda clique do utilizador para iniciar a Física e Renderização 
   window.startSimulation = function () {
     console.log('DEBUG: START SIMULATION clicado. Loop iniciado.');
+    const devPanel = document.getElementById('dev-calibration-panel');
+    if (devPanel) devPanel.style.display = 'block';
     g.lastTime = performance.now(); // reset para o dt não dar salto
     requestAnimationFrame(animate);
   };

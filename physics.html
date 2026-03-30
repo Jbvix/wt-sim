@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Física e Hidrodinâmica - WT-SIM</title>
   <link rel="stylesheet" href="src/css/physics.css">
-  
+
   <!-- MathJax Config e CDN -->
   <script>
     MathJax = {
@@ -17,10 +18,10 @@
       }
     };
   </script>
-  <script type="text/javascript" id="MathJax-script" async
-    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+  <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
   </script>
 </head>
+
 <body>
 
   <div class="container">
@@ -32,11 +33,43 @@
     </header>
 
     <main>
+
+      <!-- INTRODUÇÃO -->
+      <section class="section-glass" style="border-color: var(--accent-blue);">
+        <h2>📋 Introdução ao Modelo Físico</h2>
+        <p>
+          O <strong>WT-SIM</strong> é um simulador de manobra portuária baseado num modelo físico calibrado com
+          parâmetros
+          próximos das condições reais do <strong>ambiente marítimo costeiro</strong>. Todas as constantes e
+          propriedades
+          foram ajustadas para replicar o comportamento de um navio do tipo <strong>Panamax</strong> (LOA ≈ 225 m,
+          deslocamento ≈ 60.000 t) e de rebocadores <strong>ASD</strong> de médio porte, em contexto de manobra de
+          atracação em porto abrigado com influência de corrente e vento.
+        </p>
+        <p>
+          Os parâmetros aplicados <strong>não são puramente acadêmicos</strong>: foram inspirados nos repertórios de
+          simulação naval, ajustados iterativamente para que a resposta inercial, a tensão nos cabos e a reação aos
+          elementos climáticos reflitam, com fidelidade pedagógica, o que encontramos nas operações reais. O objetivo
+          central é que cada ação no simulador — puxar um cabo, orientar um propulsor, ou abrir o telégrafo de máquinas
+          produza uma consequência física coerente com a doutrina náutica brasileira.
+        </p>
+        <div class="math-box"
+          style="background: rgba(var(--accent-blue-rgb, 59, 130, 246), 0.08); border-left: 3px solid var(--accent-blue);">
+          <p style="margin:0; font-size: 0.95rem; color: var(--text-muted);">⚠️ <em>Nota de Validação:</em> Por se
+            tratar de um simulador didático, os parâmetros priorizam
+            a <strong>plausibilidade comportamental</strong> em detrimento da precisão naval certificada (IMO / SOLAS).
+            Os valores são representativos, não homologados para treino de certificação STCW.</p>
+        </div>
+      </section>
+
       <!-- MOTOR NUMÉRICO -->
       <section class="section-glass">
         <h2>🔬 Motor Numérico de Integração</h2>
         <p>
-          O simulador assenta num <strong>Integrador de Euler Explícito</strong> que avalia ininterruptamente o somatório de forças e momentos aplicados a cada corpo não estático (Panamax e Rebocadores) a cada <em>frame</em> de animação. A variação de tempo real limitou-se a <code>dt = 0.1s</code> para garantir 100% de estabilidade mecânica, mesmo sob tensão esporádica maciça.
+          O simulador assenta num <strong>Integrador de Euler Explícito</strong> que avalia ininterruptamente o
+          somatório de forças e momentos aplicados a cada corpo não estático (Panamax e Rebocadores) a cada
+          <em>frame</em> de animação. A variação de tempo real limitou-se a <code>dt = 0.1s</code> para garantir 100% de
+          estabilidade mecânica, mesmo sob tensão esporádica maciça.
         </p>
         <div class="math-box">
           $$\vec{v}_{t+1} = \vec{v}_t + \left( \frac{\sum \vec{F}}{m} \right) \Delta t$$
@@ -49,18 +82,24 @@
       <section class="section-glass">
         <h2>🌊 Arrasto Ambiental Numérico (Corrente e Vento)</h2>
         <p>
-          Ao invés de interpolações fixas de translação, o <strong>WT-SIM</strong> modela os elementos de fluído (água e ar) de forma realista utilizando a lei do <strong>Arrasto Quadrático</strong> ($V^2$). As rajadas de vento e correntes fortes castigam de forma impiedosa áreas amplas como o costado do navio ($4000\ m^2$).
+          Ao invés de interpolações fixas de translação, o <strong>WT-SIM</strong> modela os elementos de fluído (água e
+          ar) de forma realista utilizando a lei do <strong>Arrasto Quadrático</strong> ($V^2$). As rajadas de vento e
+          correntes fortes castigam de forma impiedosa áreas amplas como o costado do navio ($4000\ m^2$).
         </p>
         <p>
-          Calculamos as velocidades relativas do navio face aos fluidos e devolvemos os valores convertidos em arrasto contrafásico.
+          Calculamos as velocidades relativas do navio face aos fluidos e devolvemos os valores convertidos em arrasto
+          contrafásico.
         </p>
         <div class="math-box">
           $$F_{Drag} = \frac{1}{2} \cdot \rho \cdot C_D \cdot A \cdot (\vec{V}_{flow} - \vec{V}_{ship})^2$$
-          <div class="math-desc">A Força gerada obedece à velocidade ao quadrado. Um vento que duplica a velocidade (de 20 kn para 40 kn) quadruplica a carga sentida nos cabos de amarração.</div>
+          <div class="math-desc">A Força gerada obedece à velocidade ao quadrado. Um vento que duplica a velocidade (de
+            20 kn para 40 kn) quadruplica a carga sentida nos cabos de amarração.</div>
         </div>
         <ul>
-          <li><strong>Massa Específica (Água):</strong> $\rho = 1025\ kg/m^3$, multiplicada na proporção de Calado face à área imersa.</li>
-          <li><strong>Densidade (Ar):</strong> $\rho = 1.225\ kg/m^3$ testada abertamente sobre o costado vivo (Muralhas do Panamax).</li>
+          <li><strong>Massa Específica (Água):</strong> $\rho = 1025\ kg/m^3$, multiplicada na proporção de Calado face
+            à área imersa.</li>
+          <li><strong>Densidade (Ar):</strong> $\rho = 1.225\ kg/m^3$ testada abertamente sobre o costado vivo (Muralhas
+            do Panamax).</li>
         </ul>
       </section>
 
@@ -68,14 +107,20 @@
       <section class="section-glass">
         <h2>⚙️ Torque e Binário Náutico (Guinada)</h2>
         <p>
-          Os cabos e propulsores ASD (Azimutais) raramente empurram as embarcações no seu Centro de Gravidade. Forças aplicadas nas vigas distantes da proa ou da popa introduzem rotações avassaladoras. Para simular a Guinda / Rate of Turn (ROT), o Produto Vetorial ($r \times F$) bidimensional foi ajustado para coordenadas XZ, onde o Eixo Y atua na verticalidade:
+          Os cabos e propulsores ASD (Azimutais) raramente empurram as embarcações no seu Centro de Gravidade. Forças
+          aplicadas nas vigas distantes da proa ou da popa introduzem rotações avassaladoras. Para simular a Guinda /
+          Rate of Turn (ROT), o Produto Vetorial ($r \times F$) bidimensional foi ajustado para coordenadas XZ, onde o
+          Eixo Y atua na verticalidade:
         </p>
         <div class="math-box">
           $$\vec{\tau}_{y} = R_x \cdot F_z - R_z \cdot F_x$$
-          <div class="math-desc">Qualquer tração fora do centro geométrico aciona imediatamente Velocidade Angular contra as barreiras.</div>
+          <div class="math-desc">Qualquer tração fora do centro geométrico aciona imediatamente Velocidade Angular
+            contra as barreiras.</div>
         </div>
         <p>
-          A propulsão do Rebocador aplica Torque ao próprio rebocador (eixo Z de popa), mas quando o rebocador traciona o Cabo HMPE atrelado a um cabeço do Panamax, a força é transferida ao navio pelo <strong>Princípio de Ação e Reação de Newton</strong>, forçando ou anulando o balanço do mercante (Reboque Indireto).
+          A propulsão do Rebocador aplica Torque ao próprio rebocador (eixo Z de popa), mas quando o rebocador traciona
+          o Cabo HMPE atrelado a um cabeço do Panamax, a força é transferida ao navio pelo <strong>Princípio de Ação e
+            Reação de Newton</strong>, forçando ou anulando o balanço do mercante (Reboque Indireto).
         </p>
       </section>
 
@@ -83,14 +128,20 @@
       <section class="section-glass">
         <h2>⚓ Física do Cabo de Amarração e HMPE</h2>
         <p>
-          A Tensão mecânica comunicada pela Interface é simulada estritamente como um <strong>Sistema de Mola e Amortecedor Viscoso</strong> (Damped Harmonic Oscillator). Cada cabo mede constantemente o <em>Stretch</em> (delta de deformação a partir de $L_0$) e a velocidade tangencial entre os cabeços.
+          A Tensão mecânica comunicada pela Interface é simulada estritamente como um <strong>Sistema de Mola e
+            Amortecedor Viscoso</strong> (Damped Harmonic Oscillator). Cada cabo mede constantemente o <em>Stretch</em>
+          (delta de deformação a partir de $L_0$) e a velocidade tangencial entre os cabeços.
         </p>
         <div class="math-box">
           $$T = K \cdot (dist - L_0) + c \cdot v_{stretch}$$
-          <div class="math-desc">$K$ corresponde à Constante de Rigidez do material (Módulo de Elasticidade de Hooke) e $c$ ao fator de atrito e aquecimento interno.</div>
+          <div class="math-desc">$K$ corresponde à Constante de Rigidez do material (Módulo de Elasticidade de Hooke) e
+            $c$ ao fator de atrito e aquecimento interno.</div>
         </div>
         <p>
-          <strong>Cálculo Angular Transposto:</strong> Como as embarcações giram, as velocidades locais de cada cabeço são calculadas a partir da velocidade do Centro de Massa do ente somada à sua Derivada Cinemática no raio correspondente ($V_{bollardX} = V_{cmX} - R_{z} \cdot \omega$). Assim, se o navio oscilar perigosamente de través, os cabestrantes sentem o solavanco e entram no limiar <strong>CRÍTICO (> 45t)</strong>.
+          <strong>Cálculo Angular Transposto:</strong> Como as embarcações giram, as velocidades locais de cada cabeço
+          são calculadas a partir da velocidade do Centro de Massa do ente somada à sua Derivada Cinemática no raio
+          correspondente ($V_{bollardX} = V_{cmX} - R_{z} \cdot \omega$). Assim, se o navio oscilar perigosamente de
+          través, os cabestrantes sentem o solavanco e entram no limiar <strong>CRÍTICO (> 45t)</strong>.
         </p>
       </section>
 
@@ -98,16 +149,245 @@
       <section class="section-glass" style="border-color: var(--accent-blue);">
         <h2>🎓 Importância Didática na Praticagem</h2>
         <p>
-          O <strong>WT-SIM</strong> transcende a simples apresentação lúdica ao materializar, em tempo real, os vetores de esforço que normalmente permanecem abstratos nas aulas teóricas de manobra. 
+          O <strong>WT-SIM</strong> transcende a simples apresentação lúdica ao materializar, em tempo real, os vetores
+          de esforço que normalmente permanecem abstratos nas aulas teóricas de manobra.
         </p>
         <p>
-          A compreensão intrínseca da <strong>Física Visco-Elástica dos Cabos (HMPE e Eslingas Clássicas)</strong> permite aos Oficiais de Náutica antever cenários catastróficos. O simulador expõe de imediato:
+          A compreensão intrínseca da <strong>Física Visco-Elástica dos Cabos (HMPE e Eslingas Clássicas)</strong>
+          permite aos Oficiais de Náutica antever cenários catastróficos. O simulador expõe de imediato:
         </p>
         <ul>
-          <li><strong>O Feedback Inercial:</strong> Como o simples encurtamento prematuro do guincho (Colher/Heave), quando o navio deriva, pode induzir a uma quebra fatal por falta de seio mecânico (Snap-back zone hazard).</li>
-          <li><strong>Física de Atracação Cruzada:</strong> O comportamento vetorial dos Lançantes versus Espringues, comprovando empiricamente por que o Espringue trava a deslocação avante muito mais eficazmente que a Máquina a Ré do prático.</li>
-          <li><strong>O Limite do Freio:</strong> Compreender a zona de segurança dinâmica do reboque indireto (Arrest). Onde ceder o freio (Pagar/Pay Out) salva a estrutura e guinar o ASD repõe a tensão segura do conjunto.</li>
+          <li><strong>O Feedback Inercial:</strong> Como o simples encurtamento prematuro do guincho (Colher/Heave),
+            quando o navio deriva, pode induzir a uma quebra fatal por falta de seio mecânico (Snap-back zone hazard).
+          </li>
+          <li><strong>Física de Atracação Cruzada:</strong> O comportamento vetorial dos Lançantes versus Espringues,
+            comprovando empiricamente por que o Espringue trava a deslocação avante muito mais eficazmente que a Máquina
+            a Ré do prático.</li>
+          <li><strong>O Limite do Freio:</strong> Compreender a zona de segurança dinâmica do reboque indireto (Arrest).
+            Onde ceder o freio (Pagar/Pay Out) salva a estrutura e guinar o ASD repõe a tensão segura do conjunto.</li>
         </ul>
+      </section>
+
+      <!-- GLOSSÁRIO DE PARÂMETROS -->
+      <section class="section-glass" style="border-color: #a78bfa;">
+        <h2>📖 Glossário de Parâmetros Aplicados</h2>
+        <p>
+          A tabela abaixo detalha todos os parâmetros numéricos utilizados pelo motor físico do WT-SIM,
+          com o seu símbolo, valor configurado, unidade e justificativa de aplicação no contexto marítimo.
+        </p>
+
+        <table style="width:100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem;">
+          <thead>
+            <tr style="background: rgba(167,139,250,0.15); text-align:left;">
+              <th style="padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.1);">Símbolo</th>
+              <th style="padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.1);">Parâmetro</th>
+              <th style="padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.1);">Valor Aplicado</th>
+              <th style="padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.1);">Unidade</th>
+              <th style="padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.1);">Descrição e
+                Justificativa Marítima</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td
+                style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: monospace; color: #a78bfa;">
+                $m$</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);"><strong>Massa do
+                  Panamax</strong></td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); color: #34d399;">60
+                000 000</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">kg</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">Massa inercial total
+                do navio mercante (60 000 t). Inclui massa adicionada hidrodinâmica estimada em ≈10% para navios de
+                secção cilíndrica em água costeira.</td>
+            </tr>
+            <tr style="background: rgba(255,255,255,0.02);">
+              <td
+                style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: monospace; color: #a78bfa;">
+                $m_{tug}$</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);"><strong>Massa do
+                  Rebocador</strong></td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); color: #34d399;">500
+                000</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">kg</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">Massa típica de um
+                ASD de porto de médio porte (500 t). Compatível com rebocadores de 25–40 t de *bollard pull*.</td>
+            </tr>
+            <tr>
+              <td
+                style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: monospace; color: #a78bfa;">
+                $I$</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);"><strong>Momento de
+                  Inércia (Panamax)</strong></td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); color: #34d399;">5 ×
+                10¹¹</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">kg·m²</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">Inércia rotacional
+                em torno do eixo vertical (guinada). Estimado como $I ≈ m · (L/6)^2$, onde L = 225 m, refletindo a
+                distribuição de massa ao longo do comprimento do navio.</td>
+            </tr>
+            <tr style="background: rgba(255,255,255,0.02);">
+              <td
+                style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: monospace; color: #a78bfa;">
+                $\rho_w$</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);"><strong>Densidade da
+                  Água do Mar</strong></td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); color: #34d399;">1
+                025</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">kg/m³</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">Valor padrão
+                internacional da ISO 8426 para água do mar a 15°C e salinidade de 35 ppm, representativo das condições
+                portuárias costeiras brasileiras.</td>
+            </tr>
+            <tr>
+              <td
+                style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: monospace; color: #a78bfa;">
+                $\rho_a$</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);"><strong>Densidade do
+                  Ar</strong></td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); color: #34d399;">
+                1.225</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">kg/m³</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">Densidade do ar ao
+                nível do mar a 15°C (ISA - International Standard Atmosphere). Aplicada ao cálculo do arrasto de vento
+                no costado e superestrutura.</td>
+            </tr>
+            <tr style="background: rgba(255,255,255,0.02);">
+              <td
+                style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: monospace; color: #a78bfa;">
+                $C_{D,water}$</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);"><strong>Coef. de
+                  Arrasto (Água)</strong></td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); color: #34d399;">0.8
+              </td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">adimensional</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">Coeficiente de
+                resistência hidrodinâmica lateral do casco (derivada). Representa o atrito da corrente sobre a obra viva
+                imersa do Panamax.</td>
+            </tr>
+            <tr>
+              <td
+                style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: monospace; color: #a78bfa;">
+                $C_{D,wind}$</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);"><strong>Coef. de
+                  Arrasto (Vento)</strong></td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); color: #34d399;">1.2
+              </td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">adimensional</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">Coeficiente de
+                resistência aerodinâmica lateral da superestrutura (obras mortas). Valor elevado dado ao perfil bloco
+                retangular característico de navios graneleiros e porta-contentores.</td>
+            </tr>
+            <tr style="background: rgba(255,255,255,0.02);">
+              <td
+                style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: monospace; color: #a78bfa;">
+                $A_{lateral}$</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);"><strong>Área Lateral
+                  do Casco</strong></td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); color: #34d399;">≈ 4
+                000</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">m²</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">Área projetada
+                lateral do Panamax (costado exposto ao vento). Calculada como $LOA × Borda\ Livre ≈ 225 × 18\ m$. A área
+                submersa é calculada proporcionalmente ao calado configurado.</td>
+            </tr>
+            <tr>
+              <td
+                style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: monospace; color: #a78bfa;">
+                $K$</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);"><strong>Rigidez do
+                  Cabo (Spring Constant)</strong></td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); color: #34d399;">500
+                000</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">N/m</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">Constante de Hooke
+                equivalente ao módulo de elasticidade do cabo HMPE. Um cabo de 100 m a 500 kN/m entra em carga crítica
+                (>45 t) com alongamento de ≈ 0.9 m, coerente com a baixa extensibilidade do Dyneema®.</td>
+            </tr>
+            <tr style="background: rgba(255,255,255,0.02);">
+              <td
+                style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: monospace; color: #a78bfa;">
+                $c$</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <strong>Amortecimento Viscoso do Cabo</strong></td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); color: #34d399;">50
+                000</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">N·s/m</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">Fator de
+                amortecimento viscoso (atrito interno e dissipação de calor do cabo). Evita oscilações numéricas
+                violentas no integrador de Euler e simula o comportamento visco-elástico real do HMPE sob cargas
+                dinâmicas.</td>
+            </tr>
+            <tr>
+              <td
+                style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: monospace; color: #a78bfa;">
+                $T_{ruptura}$</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);"><strong>Tensão de
+                  Rutura do Cabo</strong></td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); color: #34d399;">80
+              </td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">t (toneladas-força)
+              </td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">Carga de Rutura
+                Mínima (MBL) típica para espias HMPE de 64 mm Ø utilizadas em navios Panamax. O alarme CRÍTICO dispara a
+                45 t (≈ 56% MBL), conforme recomendações de segurança da OCIMF.</td>
+            </tr>
+            <tr style="background: rgba(255,255,255,0.02);">
+              <td
+                style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: monospace; color: #a78bfa;">
+                $F_{tug}$</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);"><strong>Força Máxima
+                  do Rebocador</strong></td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); color: #34d399;">300
+                000</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">N (≈ 30 t BP)</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);"><em>Bollard
+                  Pull</em> máximo do propulsor ASD em regime estático. Compatível com rebocadores de porto de classe
+                25–35 t BP utilizados nos terminais portuários brasileiros (ex: Portos de Santos, Paranaguá).</td>
+            </tr>
+            <tr>
+              <td
+                style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: monospace; color: #a78bfa;">
+                $\mu_w$</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <strong>Amortecimento Hidrodinâmico Linear</strong></td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); color: #34d399;">100
+                000</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">N·s/m</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">Coeficiente de
+                amortecimento viscoso linear que desacelera passivamente a translação do Panamax. Representa a
+                resistência intrínseca da água ao movimento lento do casco (regime laminar a baixas velocidades de
+                manobra).</td>
+            </tr>
+            <tr style="background: rgba(255,255,255,0.02);">
+              <td
+                style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: monospace; color: #a78bfa;">
+                $\mu_r$</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <strong>Amortecimento Rotacional</strong></td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); color: #34d399;">5 ×
+                10⁹</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">N·m·s/rad</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">Resistência
+                hidrodinâmica à rotação (guinada) do Panamax. Um navio de grande porte em regime de manobra lenta tem
+                uma enorme inércia rotacional — este parâmetro garante que a guinada decaia realisticamente após
+                cessarem as forças.</td>
+            </tr>
+            <tr>
+              <td
+                style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: monospace; color: #a78bfa;">
+                $dt$</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);"><strong>Passo de
+                  Tempo da Simulação</strong></td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); color: #34d399;">0.1
+              </td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">s</td>
+              <td style="padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">Intervalo de
+                integração do método de Euler Explícito. Fixado em 0.1 s para garantir estabilidade numérica mesmo sob
+                cargas de cabo muito elevadas, satisfazendo a condição de Courant–Friedrichs–Lewy (CFL) do modelo.</td>
+            </tr>
+          </tbody>
+        </table>
       </section>
 
     </main>
@@ -119,4 +399,5 @@
   </div>
 
 </body>
+
 </html>

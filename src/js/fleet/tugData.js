@@ -31,7 +31,7 @@ export function createTugData() {
     state: {
       position:        new THREE.Vector2(0, 0), // preenchido por setupDockedScenario
       velocity:        new THREE.Vector2(0, 0),
-      heading:         -Math.PI / 2, // Guincho (+X local) virado para o navio (-Z mundo)
+      heading:         -Math.PI / 2, // [TAG: PIVOT-VISUAL-SYNC] Guincho (+X local) virado para o navio (-Z mundo)
       angularVelocity: 0,
       mass:            400,         // toneladas (mais ágil que o Panamax)
       inertia:         50_000,

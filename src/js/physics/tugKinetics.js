@@ -225,7 +225,7 @@ export function updatePhysics(dt) {
     const vLocalInitX = vRelInitX * cosH + vRelInitZ * sinH;
     const vLocalInitZ = -vRelInitX * sinH + vRelInitZ * cosH;
 
-    // FÍSICA DO SKEG (Estabilidade Direcional ASD)
+    // [TAG: ASD-SKEG-PHYSICS] FÍSICA DO SKEG (Estabilidade Direcional ASD)
     const skegX = 12.0; // Distância do Skeg ao CG (+X, Proa)
     const vSkegLocalZ = vLocalInitZ + skegX * tState.angularVelocity;
     // Arrasto brutal focado na proa (Impede "patinar no gelo" e alinha com a rota)
@@ -268,7 +268,7 @@ export function updatePhysics(dt) {
     if (tug.meshes?.tugboat) {
       tug.meshes.tugboat.position.x = ts.position.x;
       tug.meshes.tugboat.position.z = ts.position.y;
-      tug.meshes.tugboat.rotation.y = -ts.heading;
+      tug.meshes.tugboat.rotation.y = -ts.heading; // [TAG: PIVOT-VISUAL-SYNC]
     }
   });
 
@@ -394,7 +394,7 @@ export function updatePhysics(dt) {
   if (g.merchantShip) {
     g.merchantShip.position.x = shipState.position.x;
     g.merchantShip.position.z = shipState.position.y;
-    g.merchantShip.rotation.y = -shipState.heading;
+    g.merchantShip.rotation.y = -shipState.heading; // [TAG: PIVOT-VISUAL-SYNC]
   }
 
   // ── 8. Boias — Física de Inclinação ──────────────────

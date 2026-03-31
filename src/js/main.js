@@ -352,14 +352,14 @@ function setupDockedScenario() {
     tug.state.position.copy(tug.startPos);
     if (tug.meshes?.tugboat) {
       tug.meshes.tugboat.position.set(tug.startPos.x, 0, tug.startPos.y);
-      tug.meshes.tugboat.rotation.y = -tug.state.heading;
+      tug.meshes.tugboat.rotation.y = -tug.state.heading; // [TAG: PIVOT-VISUAL-SYNC]
     }
   });
 
   // Sincroniza o navio com o seu estado físico inicial
   if (g.merchantShip) {
     g.merchantShip.position.set(shipState.position.x, 0, shipState.position.y);
-    g.merchantShip.rotation.y = -shipState.heading;
+    g.merchantShip.rotation.y = -shipState.heading; // [TAG: PIVOT-VISUAL-SYNC]
   }
 
   // Liga as 4 espias BB do navio ao cais (Lançantes e Espringues)

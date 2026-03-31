@@ -38,6 +38,7 @@ export function setupGraphics() {
     antialias: true,
     logarithmicDepthBuffer: true,
   });
+  g.renderer.setPixelRatio(window.devicePixelRatio || 1);
   g.renderer.setSize(window.innerWidth, window.innerHeight);
   g.renderer.shadowMap.enabled = true;
   g.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Sombras suaves

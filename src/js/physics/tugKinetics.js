@@ -181,7 +181,7 @@ export function updatePhysics(dt) {
         tugTorque += (t.pos.x * fZ - t.pos.z * fX) * STEERING_BOOST;
 
         if (arrow) {
-          arrow.setDirection(new THREE.Vector3(-Math.cos(t.angle), 0, -Math.sin(t.angle)).normalize());
+          arrow.setDirection(new THREE.Vector3(Math.cos(t.angle), 0, Math.sin(t.angle)).normalize());
           arrow.setLength(t.thrust * 12, 3, 2); // Mantém a cabeça da seta estática (visível) mesmo sob pouco Thrust
           arrow.visible = true;
         }
@@ -218,6 +218,21 @@ export function updatePhysics(dt) {
 
     // ── 3d. Integração do Rebocador ───────────────────────
 
+    // Velocidades correntes locais
+    const vRelInitX   = tState.velocity.x - curX;
+    const vRelInitZ   = tState.velocity.y - curZ;
+    const vLocalInitX = vRelInitX * cosH + vRelInitZ * sinH;
+    const vLocalInitZ = -vRelInitX * sinH + vRelInitZ * cosH;
+
+    // FÍSICA DO SKEG (Estabilidade Direcional ASD)
+    const skegX = 12.0; // Distância do Skeg ao CG (+X, Proa)
+    const vSkegLocalZ = vLocalInitZ + skegX * tState.angularVelocity;
+    // Arrasto brutal focado na proa (Impede "patinar no gelo" e alinha com a rota)
+    const skegForceZ = -devConfig.tugSkegReact * vSkegLocalZ * Math.abs(vSkegLocalZ);
+
+    tugForceZ += skegForceZ;
+    tugTorque += skegX * skegForceZ;
+
     // Força local → global. CORREÇÃO NA MATRIZ: R(h)*F_local
     const gFX = (tugForceX * cosH - tugForceZ * sinH) + ropeForce.x + tWX;
     const gFZ = (tugForceX * sinH + tugForceZ * cosH) + ropeForce.y + tWZ;
@@ -226,7 +241,7 @@ export function updatePhysics(dt) {
     tState.velocity.y        += (gFZ / tState.mass) * dt;
     tState.angularVelocity   += (tugTorque / tState.inertia) * dt;
 
-    // Drag hidrodinâmico no referencial local
+    // Drag hidrodinâmico restante (casco normal)
     const vRelX    = tState.velocity.x - curX;
     const vRelZ    = tState.velocity.y - curZ;
     // vLocal = R(-h)*vGlobal (Inverso)

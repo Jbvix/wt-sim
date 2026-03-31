@@ -69,7 +69,8 @@ export const g = {
 export const devConfig = {
   ropeBreak: 200, // Ton
   tugDragRot: 0.96, // Angular Drag per dt
-  tugThrustMultiplier: 0.8 // 100% Throttle = 80 Ton-Force (Real Bollard Pull)
+  tugThrustMultiplier: 0.8, // 100% Throttle = 80 Ton-Force (Real Bollard Pull)
+  tugSkegReact: 5.0 // Skeg lateral drag multiplier
 };
 
 // ─────────────────────────────────────────────────────────

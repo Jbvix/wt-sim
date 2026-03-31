@@ -245,6 +245,16 @@ function initPhysicsDevTools() {
     devConfig.tugThrustMultiplier = v;
   });
 
+  const valTugSkeg = document.getElementById('vcal-tug-skeg');
+  const inpTugSkeg = document.getElementById('cal-tug-skeg');
+  if (inpTugSkeg) {
+    inpTugSkeg.addEventListener('input', (e) => {
+      const v = parseFloat(e.target.value);
+      valTugSkeg.innerText = v.toFixed(1);
+      devConfig.tugSkegReact = v;
+    });
+  }
+
   // Bindings Rope
   const valRopeK = document.getElementById('vcal-rope-k');
   const inpRopeK = document.getElementById('cal-rope-k');

@@ -361,6 +361,11 @@ export function updatePhysics(dt) {
   const hwFx_local = 0.5125 * 450  * loc_WaterX * Math.abs(loc_WaterX);
   const hwFz_local = 0.5125 * 3150 * loc_WaterZ * Math.abs(loc_WaterZ);
   
+  // [TAG: PNX-PIVOT-POINT] Desloca o Centro de Resistência Hidrodinâmica lateral 60m à vante
+  // Efeito orgânico da proa esmagando o mar no deslocamento transversal. Dá vantagem tripla aos momentos/torque originários da popa!
+  const hydrodynamicPivotOffset = 60.0;
+  shipTorque += hydrodynamicPivotOffset * hwFz_local;
+  
   // Integra todas as forças para o referencial Global
   const totalFx_local = swFx_local + hwFx_local;
   const totalFz_local = swFz_local + hwFz_local;

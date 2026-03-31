@@ -64,5 +64,16 @@ Este documento registra por etapas consolidadas todas as *TAGs de rastreabilidad
 
 ---
 
+## 6. Autenticação Orgânica do Ponto Pivot Hidrodinâmico 📍
+> **Objetivo:** Recriar a barreira física que favorece reboques pela popa (navio girando facilmente via torque da popa vs rigidez na proa).
+
+**`[TAG: PNX-PIVOT-POINT]`**
+*   **Problema Histórico:** Empurrar a popa ou empurrar a proa providenciava as exatas mesmas matrizes matemáticas, invalidando a percepção real de práticos marítimos.
+*   **Ação:** Descentralizada a massa de atrito da água (`hwFz_local`), aplicando este embate não no centro nulo, mas através de um multiplicador/alavanca de `+60m` avante do eixo. Agora o bico do navio esmaga a água no mar em deslocamentos transversos, rodando rapidamente para manobras de *Push/Pull* pela popa e freando violentamente arrastos de proa.
+*   **Ficheiros Intervencionados:**
+    *   `src/js/physics/tugKinetics.js` (Na malha de Resistência Hidrodinâmica `shipTorque`)
+
+---
+
 **Gerado Automaticamente em:** Março de 2026.
 *Consulte o diário e commits anexados para visualização pontual dos trechos.*

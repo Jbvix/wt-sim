@@ -41,11 +41,11 @@ export function switchTug(id) {
     if (id === 'stern') {
       btnSwitch.style.backgroundColor = 'var(--danger-color)';
       btnSwitch.style.color           = 'white';
-      btnSwitch.innerText             = '[ POPA ] - VERMELHO';
+      btnSwitch.innerText             = 'REBOCADOR POPA';
     } else {
       btnSwitch.style.backgroundColor = 'var(--safe-color)';
       btnSwitch.style.color           = '#000';
-      btnSwitch.innerText             = '[ PROA ] - VERDE';
+      btnSwitch.innerText             = 'REBOCADOR PROA';
     }
   }
 

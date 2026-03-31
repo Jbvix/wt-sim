@@ -228,9 +228,9 @@
                 display:flex; flex-direction:column; width:220px;
                 font-size:0.8rem; pointer-events:auto;">
 
-      <div style="font-weight:bold; border-bottom:1px solid rgba(255,255,255,0.2);
+      <div id="weather-drag-handle" style="font-weight:bold; border-bottom:1px solid rgba(255,255,255,0.2);
                   padding-bottom:5px; margin-bottom:5px;
-                  display:flex; justify-content:space-between; align-items:center;">
+                  display:flex; justify-content:space-between; align-items:center; cursor: move;">
         <span id="btn-toggle-weather" style="cursor:pointer; padding:5px 0;">▼ Atmosfera &amp; Mar</span>
         <span id="ui-lights" style="cursor:pointer; color:var(--accent-color);">[ Luzes ]</span>
       </div>
@@ -260,9 +260,9 @@
                 display:flex; flex-direction:column; width:220px;
                 font-size:0.8rem; pointer-events:auto;">
 
-      <div style="font-weight:bold; border-bottom:1px solid rgba(255,255,255,0.2);
+      <div id="ship-drag-handle" style="font-weight:bold; border-bottom:1px solid rgba(255,255,255,0.2);
                   padding-bottom:5px; margin-bottom:5px;
-                  display:flex; justify-content:space-between; align-items:center;">
+                  display:flex; justify-content:space-between; align-items:center; cursor: move;">
         <span id="btn-toggle-ship" style="cursor:pointer; padding:5px 0;">▼ Comando Panamax</span>
         <span style="color:var(--danger-color);">[ SHIP ]</span>
       </div>
@@ -304,24 +304,30 @@
         
         <!-- Area de Arraste -->
         <div id="winch-drag-handle" style="cursor: move; display:flex; flex-direction:column; align-items:center; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:8px; margin-bottom:8px;">
-          <div class="telemetry-label" style="pointer-events:none; margin-bottom: 4px;">⚓ Arraste o Painel</div>
-          <button class="winch-btn" id="btn-switch-tug"
-                  style="background-color:var(--danger-color); padding:8px 18px; width: 100%; cursor: pointer;
-                         font-weight:bold; border:2px solid white; white-space:nowrap;">
-            [ POPA ] - VERMELHO
-          </button>
+          <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+            <div class="telemetry-label" style="pointer-events:none;">⚓ Guincho / Rebocador</div>
+            <button id="btn-toggle-winch" style="background:none; border:none; color:#fff; cursor:pointer;">▼</button>
+          </div>
         </div>
 
-        <div style="display:flex; justify-content:space-between; width:100%;
-                    align-items:center; margin-bottom:5px;">
-          <div class="telemetry-label">Guincho / Leme</div>
-          <button class="winch-btn" id="btn-twin"
-                  style="width:auto; padding:2px 8px; font-size:0.7rem; cursor: pointer;">Twin Mode</button>
+        <div id="winch-content" style="display:flex; flex-direction:column;">
+          <button class="winch-btn" id="btn-switch-tug"
+                  style="background-color:var(--danger-color); padding:8px 18px; width: 100%; cursor: pointer;
+                         font-weight:bold; border:2px solid white; white-space:nowrap; margin-bottom: 10px;">
+            REBOCADOR POPA
+          </button>
+          
+          <div style="display:flex; justify-content:space-between; width:100%;
+                      align-items:center; margin-bottom:5px;">
+            <div class="telemetry-label">Guincho / Leme</div>
+            <button class="winch-btn" id="btn-twin"
+                    style="width:auto; padding:2px 8px; font-size:0.7rem; cursor: pointer;">Twin Mode</button>
+          </div>
+          <button class="winch-btn btn-disconnect" id="btn-disconnect" style="margin-bottom: 5px;">Desconectar</button>
+          <button class="winch-btn" id="btn-heave" style="margin-bottom: 5px;">▲ Colher (Heave)</button>
+          <button class="winch-btn btn-brake btn-toggle-active" id="btn-brake" style="margin-bottom: 5px;">Freio: Travado</button>
+          <button class="winch-btn" id="btn-pay">▼ Pagar (Pay)</button>
         </div>
-        <button class="winch-btn btn-disconnect" id="btn-disconnect" style="margin-bottom: 5px;">Desconectar</button>
-        <button class="winch-btn" id="btn-heave" style="margin-bottom: 5px;">▲ Colher (Heave)</button>
-        <button class="winch-btn btn-brake btn-toggle-active" id="btn-brake" style="margin-bottom: 5px;">Freio: Travado</button>
-        <button class="winch-btn" id="btn-pay">▼ Pagar (Pay)</button>
       </div>
 
       <!-- Joystick Estibordo (BE) — direita -->

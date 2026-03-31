@@ -505,8 +505,8 @@ function makeDraggable(panelId, handleId) {
   let isDragging = false, startX, startY, initLeft, initTop;
 
   handle.addEventListener('pointerdown', (e) => {
-    // Não arrastar se o clique foi num botão interno
-    if (e.target.tagName.toLowerCase() === 'button') return;
+    // Não arrastar se o clique foi num botão interno ou toggle
+    if (e.target.tagName.toLowerCase() === 'button' || e.target.tagName.toLowerCase() === 'span') return;
     
     isDragging = true;
     startX = e.clientX;
@@ -546,6 +546,8 @@ function setupEventListeners() {
   window.addEventListener('resize', onWindowResize, false);
   
   makeDraggable('winch-panel', 'winch-drag-handle');
+  makeDraggable('weather-panel', 'weather-drag-handle');
+  makeDraggable('ship-panel', 'ship-drag-handle');
 
   // ── Zoom Rápido ───────────────────────────────────────
 

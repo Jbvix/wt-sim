@@ -25,6 +25,22 @@ export function setupWinchPanel() {
   const btnBrake      = document.getElementById('btn-brake');
   const btnDisconnect = document.getElementById('btn-disconnect');
 
+  // ── Painel ocultável (Mobile-First collapse) ──────────────
+  const winchBtn = document.getElementById('btn-toggle-winch');
+  const winchContent = document.getElementById('winch-content');
+  if (winchBtn && winchContent) {
+    winchBtn.addEventListener('click', () => {
+      const isHidden = winchContent.style.display === 'none';
+      if (isHidden) {
+        winchContent.style.display = 'flex';
+        winchBtn.innerText = '▼';
+      } else {
+        winchContent.style.display = 'none';
+        winchBtn.innerText = '▶';
+      }
+    });
+  }
+
   // ── Heave / Pay (botões de pressão contínua) ───────────
 
   /** Reengata o freio automaticamente ao acionar o guincho. */

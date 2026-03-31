@@ -252,7 +252,7 @@ export function updatePhysics(dt) {
     if (tug.meshes?.tugboat) {
       tug.meshes.tugboat.position.x = ts.position.x;
       tug.meshes.tugboat.position.z = ts.position.y;
-      tug.meshes.tugboat.rotation.y = ts.heading;
+      tug.meshes.tugboat.rotation.y = -ts.heading;
     }
   });
 
@@ -377,7 +377,7 @@ export function updatePhysics(dt) {
   if (g.merchantShip) {
     g.merchantShip.position.x = shipState.position.x;
     g.merchantShip.position.z = shipState.position.y;
-    g.merchantShip.rotation.y = shipState.heading;
+    g.merchantShip.rotation.y = -shipState.heading;
   }
 
   // ── 8. Boias — Física de Inclinação ──────────────────

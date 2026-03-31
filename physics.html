@@ -390,6 +390,43 @@
         </table>
       </section>
 
+      <!-- FÍSICA DO CABO E INTERAÇÃO -->
+      <section class="section-glass" style="border-color: #f59e0b; margin-top: 30px;">
+        <h2>🔗 Física do Cabo HMPE e Interação Acoplada</h2>
+        <p>
+          O simulador WT-SIM não trata o cabo de reboque como uma restrição geométrica rígida. Abordar o problema desta forma causaria instabilidades numéricas irreversíveis. Em vez disso, o cabo simulado é um sistema de <strong>Mola-Amortecedor Visco-Elástico</strong> regido pela Lei de Hooke Modificada para suportar até os limites de rutura programados.
+        </p>
+        
+        <h3>1. O Princípio Dinâmico Trilateral</h3>
+        <p>A física não atua isoladamente. A manobra envolve um balanço energético rígido:</p>
+        <ul>
+          <li><strong>Motor Propulsor do Rebocador (Força Ativa ASD)</strong> $\rightleftarrows$ <strong>Corda Sintética/Aço (Transmissor Elástico)</strong> $\rightleftarrows$ <strong>Casco do Panamax (Carga Inercial + Drag)</strong></li>
+        </ul>
+
+        <h3>2. A Equação Tênsil (Mola-Amortecedor)</h3>
+        <div class="math-box">
+          $$T_{cabo} = \max\Big(0, \ \ k \cdot (D - L_0) + B \cdot v_{stretch}\Big)$$
+          <div class="math-desc">A Tensão em Toneladas-Força ($T_{cabo}$) é dinamicamente contida num intervalo entre $0$ (Catenária/Frouxo) e o Teto Físico de Rotura HMPE ($200\text{T}$).</div>
+        </div>
+        <ul>
+          <li><strong>$D$:</strong> Distância Euclides plana absoluta entre o <em>Winch</em> e o <em>Bollard</em>.</li>
+          <li><strong>$L_0$:</strong> Comprimento intrínseco do cabo já relaxado (pago pelo guincho).</li>
+          <li><strong>$k$:</strong> Constante Elástica longitudinal do material na ordem de grandeza $t/m$.</li>
+          <li><strong>$B$:</strong> Coeficiente de Amortecimento. Funciona como freio balístico dissipando energia (calor) para evitar que a corda mande o rebocador de volta como fisga.</li>
+          <li><strong>$v_{stretch}$:</strong> Velocidade de repuxo vetorial relativo entre as extremidades do navio.</li>
+        </ul>
+
+        <h3>3. Cinemática de Rotação M-Ship (O Efeito Alavanca)</h3>
+        <p>Um Porta-Contentores de $225m$ com $\textbf{65.000 Toneladas}$ possui um Inércia abismal. Para induzir guinada, precisamos de uma Força $F$ cruzada com os distanciamentos longitudinais $R_x$ ou $R_z$.</p>
+        <div class="math-box">
+          $$ \tau_{\text{Navio}} = R_x \cdot F_{z\_Global}^{Cabo} - R_z \cdot F_{x\_Global}^{Cabo} $$
+          <div class="math-desc">Transposição Euclidiana do Momento Angular gerado nos Cabeços da Nau.</div>
+        </div>
+        <p>
+          <strong>A Prova Geométrica:</strong> Se atar o rebocador ao Lançante da Popa ($R_x = -110m$) e puxar estritamente para Estibordo ($F_z &gt; 0$ Global), obteremos um $\tau$ (Torque Polar) fortemente Negativo. Segundo as regras canónicas 3D, um torque Negativo sobre um centro fixo rotaciona o objecto no sentido Horário. Este giro desvia mecanicamente a Proa em sentido inverso, afundando-a na margem de Bombordo.
+        </p>
+      </section>
+
     </main>
 
     <footer>

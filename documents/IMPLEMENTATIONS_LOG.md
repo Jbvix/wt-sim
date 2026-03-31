@@ -75,5 +75,24 @@ Este documento registra por etapas consolidadas todas as *TAGs de rastreabilidad
 
 ---
 
+## 7. Otimização de Layout para Dispositivos Móveis (UI/UX) 📱
+> **Objetivo:** Maximizar a área de visualização 3D e agrupar controles para uso ergonômico em tablets e celulares.
+
+**`[TAG: UI-MOBILE-OPTIMIZATION]`**
+*   **Problema Histórico:** Telas poluídas por ferramentas de desenvolvedor (Física e Calibração); Painéis fixos consumindo espaço central e lateral; Identificação textual de rebocadores com excesso de informação visual; Painel do guincho prejudicava o alcance dos joysticks no rodapé.
+*   **Ação:**
+    1. Painéis Dev ocultados integralmente.
+    2. Botão de seleção de "Rebocador Ativo" integrado hierarquicamente ao Painel do Guincho.
+    3. Modelagem unificada de *Drag & Drop* (`makeDraggable`) tornando painéis (Mar, Comando e Guincho) arrastáveis.
+    4. Adicionado gatilho de *Collapse* (Minimizar) no Guincho (`btn-toggle-winch`), recolhendo a interface até sobrar apenas a informação vital do rebocador ativo.
+    5. Padronização náutica da seleção: Alterado de "[ POPA ] - VERMELHO" para leitura técnica limpa "REBOCADOR POPA".
+*   **Ficheiros Intervencionados:**
+    *   `index.html` (Hierarquia DOM, Drag Handles, CSS inline Absoluto)
+    *   `src/js/main.js` (Injeção PointerEvents customizada `makeDraggable`)
+    *   `src/js/ui/winchPanel.js` (Listeners do Collapse Winch Content)
+    *   `src/js/fleet/fleetManager.js` (Text replacement)
+
+---
+
 **Gerado Automaticamente em:** Março de 2026.
 *Consulte o diário e commits anexados para visualização pontual dos trechos.*

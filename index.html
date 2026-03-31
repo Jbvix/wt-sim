@@ -284,18 +284,6 @@
     <!-- ── Mensagem de Estado (centro, pulsante) ─────────── -->
     <div id="status-message">Selecione o Cabeço no Cais</div>
 
-    <!-- ── Seletor de Rebocador Ativo (centro, acima do rodapé) ── -->
-    <div style="position:absolute; left:50%; bottom:220px; transform:translateX(-50%);
-                z-index:20; display:flex; flex-direction:column; align-items:center;
-                gap:4px; pointer-events:auto;">
-      <div class="telemetry-label" style="text-shadow:1px 1px 2px #000;">Rebocador Ativo</div>
-      <button class="winch-btn" id="btn-switch-tug"
-              style="background-color:var(--danger-color); padding:8px 18px;
-                     font-weight:bold; border:2px solid white; white-space:nowrap;">
-        [ POPA ] - VERMELHO
-      </button>
-    </div>
-
     <!-- ── Rodapé: Controles de Propulsão e Guincho ───── -->
     <div id="footer-controls">
 
@@ -311,17 +299,28 @@
         </div>
       </div>
 
-      <!-- Painel do Guincho — centro -->
-      <div id="winch-panel" class="panel">
+      <!-- Painel do Guincho / Rebocador — Centro (Flutuante/Movível) -->
+      <div id="winch-panel" class="panel" style="position:absolute; left:calc(50% - 110px); bottom:20px; z-index:100; min-width: 220px; touch-action: none;">
+        
+        <!-- Area de Arraste -->
+        <div id="winch-drag-handle" style="cursor: move; display:flex; flex-direction:column; align-items:center; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:8px; margin-bottom:8px;">
+          <div class="telemetry-label" style="pointer-events:none; margin-bottom: 4px;">⚓ Arraste o Painel</div>
+          <button class="winch-btn" id="btn-switch-tug"
+                  style="background-color:var(--danger-color); padding:8px 18px; width: 100%; cursor: pointer;
+                         font-weight:bold; border:2px solid white; white-space:nowrap;">
+            [ POPA ] - VERMELHO
+          </button>
+        </div>
+
         <div style="display:flex; justify-content:space-between; width:100%;
                     align-items:center; margin-bottom:5px;">
           <div class="telemetry-label">Guincho / Leme</div>
           <button class="winch-btn" id="btn-twin"
-                  style="width:auto; padding:2px 8px; font-size:0.7rem;">Twin Mode</button>
+                  style="width:auto; padding:2px 8px; font-size:0.7rem; cursor: pointer;">Twin Mode</button>
         </div>
-        <button class="winch-btn btn-disconnect" id="btn-disconnect">Desconectar</button>
-        <button class="winch-btn" id="btn-heave">▲ Colher (Heave)</button>
-        <button class="winch-btn btn-brake btn-toggle-active" id="btn-brake">Freio: Travado</button>
+        <button class="winch-btn btn-disconnect" id="btn-disconnect" style="margin-bottom: 5px;">Desconectar</button>
+        <button class="winch-btn" id="btn-heave" style="margin-bottom: 5px;">▲ Colher (Heave)</button>
+        <button class="winch-btn btn-brake btn-toggle-active" id="btn-brake" style="margin-bottom: 5px;">Freio: Travado</button>
         <button class="winch-btn" id="btn-pay">▼ Pagar (Pay)</button>
       </div>
 
@@ -344,7 +343,7 @@
   <!-- ═══════════════════════════════════════════════════
        PAINEL DE CALIBRAÇÃO (DEV TOOL TEMPORÁRIA)
        ═══════════════════════════════════════════════════ -->
-  <div id="dev-calibration-panel" class="panel" style="display: none; position: absolute; top: 70px; right: 10px; z-index: 9999; width: 300px; font-size: 0.8rem; cursor: move; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+  <div id="dev-calibration-panel" class="panel" style="display: none !important; position: absolute; top: 70px; right: 10px; z-index: 9999; width: 300px; font-size: 0.8rem; cursor: move; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
     <div id="dev-drag-handle" style="background: rgba(249, 115, 22, 0.2); padding: 8px; margin: -10px -10px 10px -10px; border-bottom: 1px solid #f97316; font-weight: bold; color: #f97316;">
       🛠️ Calibração Flutuante (Arraste-me)
     </div>
@@ -375,7 +374,7 @@
   <!-- ═══════════════════════════════════════════════════
        PAINEL FÍSICO (DEV TOOL TEMPORÁRIA)
        ═══════════════════════════════════════════════════ -->
-  <div id="dev-physics-panel" class="panel" style="display: none; position: absolute; top: 70px; left: 10px; z-index: 9999; width: 320px; font-size: 0.8rem; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+  <div id="dev-physics-panel" class="panel" style="display: none !important; position: absolute; top: 70px; left: 10px; z-index: 9999; width: 320px; font-size: 0.8rem; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
     <div id="dev-phys-drag-handle" style="background: rgba(14, 165, 233, 0.2); padding: 8px; margin: -10px -10px 10px -10px; border-bottom: 1px solid #0ea5e9; font-weight: bold; color: #0ea5e9; cursor: move; display: flex; justify-content: space-between;">
       <span>⚙️ Motor de Física Clássica</span>
       <button id="dev-phys-btn-min" style="background: none; border: none; color: #0ea5e9; cursor: pointer; font-weight: bold;">[ - ]</button>

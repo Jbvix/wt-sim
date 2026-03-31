@@ -328,10 +328,6 @@ async function init() {
   // 3. Aguarda clique do utilizador para iniciar a Física e Renderização 
   window.startSimulation = function () {
     console.log('DEBUG: START SIMULATION clicado. Loop iniciado.');
-    const devPanel = document.getElementById('dev-calibration-panel');
-    const physPanel = document.getElementById('dev-physics-panel');
-    if (devPanel) devPanel.style.display = 'block';
-    if (physPanel) physPanel.style.display = 'block';
     
     g.lastTime = performance.now(); // reset para o dt não dar salto
     requestAnimationFrame(animate);
@@ -495,8 +491,52 @@ function animate(timestamp) {
 }
 
 // ─────────────────────────────────────────────────────────
-// 4. EVENTOS GLOBAIS
+// 4. EVENTOS GLOBAIS & UTILITARIOS DA UI
 // ─────────────────────────────────────────────────────────
+
+/**
+ * Utilitário genérico para tornar painéis HTML arrastáveis (drag & drop)
+ */
+function makeDraggable(panelId, handleId) {
+  const panel = document.getElementById(panelId);
+  const handle = document.getElementById(handleId);
+  if (!panel || !handle) return;
+
+  let isDragging = false, startX, startY, initLeft, initTop;
+
+  handle.addEventListener('pointerdown', (e) => {
+    // Não arrastar se o clique foi num botão interno
+    if (e.target.tagName.toLowerCase() === 'button') return;
+    
+    isDragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    
+    const rect = panel.getBoundingClientRect();
+    initLeft = rect.left;
+    initTop = rect.top;
+    
+    // Converte posicao do elemento para pixels fixos e remove transforms que atrapalham o drag
+    panel.style.transform = 'none';
+    panel.style.bottom = 'auto'; // desativa bottom para usar top livremente
+    panel.style.left = `${initLeft}px`;
+    panel.style.top = `${initTop}px`;
+    
+    handle.setPointerCapture(e.pointerId); // Garante drag mesmo arrastando fora do ecran
+  });
+
+  handle.addEventListener('pointermove', (e) => {
+    if (!isDragging) return;
+    panel.style.left = `${initLeft + (e.clientX - startX)}px`;
+    panel.style.top  = `${initTop + (e.clientY - startY)}px`;
+  });
+
+  handle.addEventListener('pointerup', (e) => {
+    isDragging = false;
+    handle.releasePointerCapture(e.pointerId);
+  });
+}
+
 
 /**
  * Regista todos os event listeners globais da aplicação:
@@ -504,6 +544,8 @@ function animate(timestamp) {
  */
 function setupEventListeners() {
   window.addEventListener('resize', onWindowResize, false);
+  
+  makeDraggable('winch-panel', 'winch-drag-handle');
 
   // ── Zoom Rápido ───────────────────────────────────────
 

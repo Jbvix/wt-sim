@@ -181,7 +181,8 @@ export function updatePhysics(dt) {
         tugTorque += (t.pos.x * fZ - t.pos.z * fX) * STEERING_BOOST;
 
         if (arrow) {
-          arrow.setDirection(new THREE.Vector3(Math.cos(t.angle), 0, Math.sin(t.angle)).normalize());
+          // [TAG: ASD-JET-VISUAL] Setas indicando o Jato (água ejetada), inverso do Empuxo (Thrust)
+          arrow.setDirection(new THREE.Vector3(-Math.cos(t.angle), 0, -Math.sin(t.angle)).normalize());
           arrow.setLength(t.thrust * 12, 3, 2); // Mantém a cabeça da seta estática (visível) mesmo sob pouco Thrust
           arrow.visible = true;
         }
@@ -368,10 +369,11 @@ export function updatePhysics(dt) {
   shipForceGlobal.y += totalFx_local * sSinH + totalFz_local * sCosH;
 
   // Torque induzido por vento e corrente (drag angular hidrãulic)
-  // Amortecimento linear + quadrático: impede rotação descontrolada por corrente
+  // [TAG: PNX-ANGULAR-DRAG] Amortecimento linear e quadrático estendido para calado imenso de 225m de comprimento (O(L^4)).
+  // Impede que os 275 Milhões de Inércia preservem a rotação infinitamente.
   const angularDrag =
-    -8000   * shipState.angularVelocity                                                     // linear  (dominante a ω baixo)
-    - 0.5125 * 50000 * shipState.angularVelocity * Math.abs(shipState.angularVelocity);     // quadrático
+    -9000000 * shipState.angularVelocity                                                     // linear (dominante quando quase parando)
+    - 35000000 * shipState.angularVelocity * Math.abs(shipState.angularVelocity);            // quadrático (atua pesadamente na derrapada)
   shipTorque += angularDrag;
 
   // ── 7. Integração e Cinemática do Panamax ───────────────────
@@ -400,7 +402,8 @@ export function updatePhysics(dt) {
 
   // ── 9. Colisões ────────────────────────────────────
 
-  checkCollisions();
+  // [TAG: TUG-PUSH-HULL] Passamos dt para resolver impulsões elásticas com o casco
+  checkCollisions(dt);
 
   // ── 10. Telemetria HUD ─────────────────────────────
 

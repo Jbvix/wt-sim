@@ -60,8 +60,9 @@ const TUG_RADIUS = 14;
 /**
  * Verifica e resolve todas as colisões do frame atual.
  * Deve ser chamado ao final de updatePhysics() a cada frame.
+ * @param {number} dt Delta time simulado
  */
-export function checkCollisions() {
+export function checkCollisions(dt = 0.016) {
 
   // ── A. Panamax vs. Cais ─────────────────────────────────
 
@@ -126,17 +127,35 @@ export function checkCollisions() {
       const normGlobalX = normLocalX * cosH - normLocalZ * sinH;
       const normGlobalZ = normLocalX * sinH + normLocalZ * cosH;
 
-      // Empurra o rebocador para fora do casco
+      // Empurra o rebocador para fora do casco (impede travessia visual)
       ts.position.x += normGlobalX * penetration;
       ts.position.y += normGlobalZ * penetration;
 
-      // Reflexão da velocidade (impacto inelástico)
+      // [TAG: TUG-PUSH-HULL] Trata a Força de Empurre contínua pelas defensas
+      const fenderStiffness = 65000; // rigidez das defensas cilíndricas maciças do casco (ton/m)
+      const pushForce = fenderStiffness * penetration;
+      
+      const pushX = normGlobalX * pushForce;
+      const pushZ = normGlobalZ * pushForce;
+      
+      // Injeciona F=m*a acelerativo instantâneo na massa total de 65.000t do Panamax
+      shipState.velocity.x += (pushX / shipState.mass) * dt;
+      shipState.velocity.y += (pushZ / shipState.mass) * dt;
+      
+      // Torque indutivo gerado pelo empurrão, convertendo braço r ao centro do navio
+      const rGlobalX = cx * cosH - cz * sinH;
+      const rGlobalZ = cx * sinH + cz * cosH;
+      const pushTorque = (rGlobalX * pushZ) - (rGlobalZ * pushX);
+      
+      shipState.angularVelocity += (pushTorque / shipState.inertia) * dt;
+
+      // Ricochete inelástico para subtrair momento do rebocador em grandes embalos
       const vDotN = ts.velocity.x * normGlobalX + ts.velocity.y * normGlobalZ;
       if (vDotN < 0) {
         ts.velocity.x -= 1.2 * vDotN * normGlobalX;
         ts.velocity.y -= 1.2 * vDotN * normGlobalZ;
         if (Math.abs(vDotN) > 0.5) {
-          showCrashWarning('ALERTA: Colisão Transversal!');
+          showCrashWarning('ALERTA: Colisão Transversal Pesada!');
         }
       }
     }

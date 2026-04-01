@@ -443,4 +443,48 @@ export function buildWorld() {
 
   // ── H. Boias Náuticas do Canal de Manobra ─────────────
   createBuoys();
+
+  // ── I. Postes de Iluminação do Terminal (Expansão Gráfica) ──
+  const poleGroup = new THREE.Group();
+  
+  // Distribuir postes ao longo do cais: de X = -180 a X = 180 a cada 60 metros
+  for (let xPos = -180; xPos <= 180; xPos += 60) {
+    const post = new THREE.Group();
+    post.position.set(xPos, 5, -25); // Na parte de trás do cais (Z = -25)
+    
+    // Pilar base (Metálico cinza escuro)
+    const pillarGeo = new THREE.CylinderGeometry(0.4, 0.6, 18, 8);
+    const pillarMat = new THREE.MeshStandardMaterial({ 
+      color: 0x333333, 
+      roughness: 0.7,
+      metalness: 0.5 
+    });
+    const pillar = new THREE.Mesh(pillarGeo, pillarMat);
+    pillar.position.y = 9; // Metade de 18
+    pillar.castShadow = true;
+    post.add(pillar);
+    
+    // Braço superior do poste virado para a água (Z positivo)
+    const armGeo = new THREE.CylinderGeometry(0.2, 0.2, 5, 8);
+    const arm = new THREE.Mesh(armGeo, pillarMat);
+    arm.position.set(0, 17.5, 2);
+    arm.rotation.x = Math.PI / 2;
+    arm.castShadow = true;
+    post.add(arm);
+    
+    // Lâmpada (Fonte Emissora de Brilho Direto, sem usar PointLight pesada)
+    const bulbGeo = new THREE.BoxGeometry(1.2, 0.4, 0.8); // Formato de luminária industrial
+    const bulbMat = new THREE.MeshStandardMaterial({ 
+      color: 0xffffff,
+      emissive: 0xffaa00, // Amarelo/Laranja vapor de sódio
+      emissiveIntensity: 4.0, // Brilho forte para destacar no escuro ou neblina
+      roughness: 0.2
+    });
+    const bulb = new THREE.Mesh(bulbGeo, bulbMat);
+    bulb.position.set(0, 17.3, 4); // Na ponta do braço, apontando para baixo
+    post.add(bulb);
+    
+    poleGroup.add(post);
+  }
+  g.scene.add(poleGroup);
 }

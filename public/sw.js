@@ -3,9 +3,7 @@ const CACHE_NAME = 'wtsim-cache-v2';
 // Ficheiros estáticos mínimos para o arranque rápido
 const PRECACHE_ASSETS = [
   './',
-  './index.html',
-  './src/css/style.css',
-  './src/js/main.js'
+  './index.html'
 ];
 
 self.addEventListener('install', (event) => {

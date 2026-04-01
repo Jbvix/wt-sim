@@ -234,10 +234,10 @@ export function buildWorld() {
   // ── B. Cais de Betão ─────────────────────────────────
 
   g.pier = new THREE.Mesh(
-    new THREE.BoxGeometry(400, 5, 20),
+    new THREE.BoxGeometry(400, 5, 120),
     new THREE.MeshStandardMaterial({ color: 0x808080 })
   );
-  g.pier.position.set(0, 2.5, -20); // Face frontal em Z = -10
+  g.pier.position.set(0, 2.5, -70); // Face frontal mantida em Z = -10
   g.pier.castShadow    = true;
   g.pier.receiveShadow = true;
   g.scene.add(g.pier);
@@ -487,4 +487,53 @@ export function buildWorld() {
     poleGroup.add(post);
   }
   g.scene.add(poleGroup);
+
+  // ── J. Pilhas de Contentores (Colorindo o Cais) ───────────
+  const containerGroup = new THREE.Group();
+  const contGeo = new THREE.BoxGeometry(6, 2.6, 2.4); // ISO 20 Pés nativo
+  const contColors = [0x1e3a8a, 0x991b1b, 0xf8fafc, 0xea580c]; // Azul, Vermelho, Branco, Laranja
+  const contMats = contColors.map(color => new THREE.MeshStandardMaterial({ color, roughness: 0.6 }));
+
+  // Distribuir numa grelha ao longo do cais (Z indo de -35 a -70 atrás dos postes)
+  for (let xPos = -160; xPos <= 160; xPos += 8) { 
+    for (let zPos = -35; zPos >= -70; zPos -= 4) { 
+      if (Math.random() > 0.4) { // 60% de probabilidade de haver uma pilha
+        const stackHeight = Math.floor(Math.random() * 4) + 1; // 1 a 4 alturas
+        for (let yLevel = 0; yLevel < stackHeight; yLevel++) {
+          const mat = contMats[Math.floor(Math.random() * contMats.length)];
+          const cont = new THREE.Mesh(contGeo, mat);
+          // Y base é do topo do cais (5) + metade do contentor (1.3) + pilhas
+          cont.position.set(xPos, 5 + 1.3 + (yLevel * 2.6), zPos);
+          cont.castShadow = true;
+          cont.receiveShadow = true;
+          containerGroup.add(cont);
+        }
+      }
+    }
+  }
+  g.scene.add(containerGroup);
+
+  // ── K. Armazém (Warehouse) Híbrido ─────────────────────────
+  const warehouseGroup = new THREE.Group();
+  
+  // Corpo Principal do Armazém (100m comp x 15m alt x 40m prof)
+  const whGeo = new THREE.BoxGeometry(100, 15, 40);
+  const whMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.9 }); // Cinza claro clássico
+  const warehouse = new THREE.Mesh(whGeo, whMat);
+  // Z = -95 acomoda perfeitamente os 40m de fundos começando atrás dos contentores (-75)
+  warehouse.position.set(0, 5 + 7.5, -95); 
+  warehouse.castShadow = true;
+  warehouse.receiveShadow = true;
+  warehouseGroup.add(warehouse);
+
+  // Telhado Colorido/Inclinado (Box ligeiramente maior no topo simulando beirais)
+  const roofBox = new THREE.BoxGeometry(102, 2, 42);
+  const roofMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8 }); // Slate/Azul Marinho
+  const roof = new THREE.Mesh(roofBox, roofMat);
+  roof.position.set(0, 5 + 15 + 1, -95);
+  roof.castShadow = true;
+  roof.receiveShadow = true;
+  warehouseGroup.add(roof);
+
+  g.scene.add(warehouseGroup);
 }

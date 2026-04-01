@@ -94,5 +94,40 @@ Este documento registra por etapas consolidadas todas as *TAGs de rastreabilidad
 
 ---
 
-**Gerado Automaticamente em:** Março de 2026.
+## 8. Persistência de Controle dos Rebocadores (Memória de Thrust) 💾
+> **Objetivo:** Manter as configurações de manobra (potência e ângulo) ao alternar entre os rebocadores durante a operação portuária.
+
+**`[TAG: TUG-CONTROL-PERSISTENCE]`**
+*   **Problema Histórico:** O painel de controle resetava a potência e o ângulo do propulsor azimutal sempre que o usuário trocava o controle da proa para a popa, quebrando a precisão.
+*   **Ação:** Implementação de cache de estados na UI para cada rebocador individualmente, restaurando perfeitamente a barra de tração e o dial de rotação anterior ao alternar o foco.
+*   **Ficheiros Intervencionados:**
+    *   `src/components/WinchPanel.jsx`
+
+---
+
+## 9. Expansão Gráfica do Terminal Portuário 🏗️
+> **Objetivo:** Aumentar a fidelidade visual e a imersão do cenário (pier) de forma otimizada (draw calls) para o Three.js.
+
+**`[TAG: PORT-GRAPHICS-EXPANSION]`**
+*   **Problema Histórico:** O cais era obsoleto, muito recuado e vazio, perdendo a escala visual massiva de uma operação de contêineres reais.
+*   **Ação:** Extensão do volume físico principal do pier e adição de dezenas de instâncias coloridas simulando a armazenagem empilhada em pátio. Criação de um armazém de apoio visual compondo o diorama 3D sem prejudicar FPS.
+*   **Ficheiros Intervencionados:**
+    *   `src/js/graphics/models.js`
+
+---
+
+## 10. Modernização da Interface para React + TailwindCSS ⚛️
+> **Objetivo:** Migrar o velho maquinário HTML estático / Vanilla JS para Componentes reativos, limpos e responsivos.
+
+**`[TAG: REACT-UI-MIGRATION]`**
+*   **Problema Histórico:** Eventos "spaghetti" interligados entre HTML bruto e Vanilla JS complicava expansão, os painéis fixos obstruíam muito a câmera no mobile.
+*   **Ação:** Desenvolvimento total do Frontend Modular React com TailwindCSS; `TopBar` condensando navio e telemetria (Vento, Velocidade), eliminando poluição visual, e `WinchPanel` abraçando Dial/Slider atualizado na extremidade inferior da tela, garantindo o visual *Wow-factor* do cenário em toda proporção do viewport.
+*   **Ficheiros Intervencionados:**
+    *   `src/components/TopBar.jsx`
+    *   `src/components/WinchPanel.jsx`
+    *   `src/js/main.js`
+
+---
+
+**Gerado Automaticamente em:** Abril de 2026.
 *Consulte o diário e commits anexados para visualização pontual dos trechos.*

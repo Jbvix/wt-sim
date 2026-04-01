@@ -9,6 +9,7 @@
 
 import { g } from '../state/globals.js';
 import { tugs } from './tugData.js';
+import { gsap } from 'gsap';
 
 // ─────────────────────────────────────────────────────────
 // 1. ALTERNÂNCIA DE REBOCADOR ATIVO
@@ -35,6 +36,30 @@ export function switchTug(id) {
   g.jetArrowBE      = tug.meshes.jetArrowBE;
   g.resultantArrow  = tug.meshes.resultantArrow;
 
+  // ── Panning Suave da Câmera (Sprint 1) ─────────────────
+  if (g.camera && g.controls && g.tugboat) {
+    const tPos = g.tugboat.position;
+    
+    // Anima a Posição da Câmera (Chase Cam overview lateral)
+    gsap.to(g.camera.position, {
+      x: tPos.x - 70,
+      y: 45,
+      z: tPos.z + 120,
+      duration: 1.5,
+      ease: "power2.inOut"
+    });
+
+    // Anima o Alvo do OrbitControls para focar exatamente no rebocador
+    gsap.to(g.controls.target, {
+      x: tPos.x,
+      y: tPos.y + 5,
+      z: tPos.z,
+      duration: 1.5,
+      ease: "power2.inOut",
+      onUpdate: () => g.controls.update()
+    });
+  }
+
   // ── Atualização do botão de frota ─────────────────────
   const btnSwitch = document.getElementById('btn-switch-tug');
   if (btnSwitch) {
@@ -57,11 +82,17 @@ export function switchTug(id) {
 
     slider.value = g.thrusters[side].thrust * 100;
 
-    const ang         = g.thrusters[side].angle;
+    // A física grava forceAngle = azimuteVisual + PI / 2.
+    // Portanto azimuteVisual = physAngle - PI / 2.
+    const physAngle   = g.thrusters[side].angle;
+    const visAngle    = physAngle - Math.PI / 2;
     const handleLimit = 25; // px — raio visual do dial
-    const x = handleLimit * Math.cos(ang);
-    const y = handleLimit * Math.sin(ang);
-    stick.style.transform = `translate(${x}px, ${y}px)`;
+    const x = handleLimit * Math.cos(visAngle);
+    const y = handleLimit * Math.sin(visAngle);
+    
+    // TEM QUE MANTER A TRANSLATION CENTRAL (-50%) DO CSS BASE!
+    stick.style.transition = 'none'; // previne animação louca ao trocar
+    stick.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
   });
 
   // ── Quebra Twin Control por segurança ─────────────────
@@ -94,8 +125,11 @@ export function switchTug(id) {
  * Deve ser chamado uma vez em init().
  */
 export function setupFleetManager() {
-  document.getElementById('btn-switch-tug').addEventListener('click', () => {
-    const newId = g.activeTugId === 'stern' ? 'bow' : 'stern';
-    switchTug(newId);
-  });
+  const btnSwitch = document.getElementById('btn-switch-tug');
+  if (btnSwitch) {
+    btnSwitch.addEventListener('click', () => {
+      const newId = g.activeTugId === 'stern' ? 'bow' : 'stern';
+      switchTug(newId);
+    });
+  }
 }

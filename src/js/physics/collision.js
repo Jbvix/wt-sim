@@ -64,17 +64,76 @@ const TUG_RADIUS = 14;
  */
 export function checkCollisions(dt = 0.016) {
 
-  // ── A. Panamax vs. Cais ─────────────────────────────────
+  // ── A. Panamax vs. Cais (Física de 4 Cantos / OBB) ──────
 
-  const shipReachZ =
-    SHIP_HALF_LENGTH * Math.abs(Math.sin(shipState.heading)) +
-    SHIP_HALF_BEAM   * Math.abs(Math.cos(shipState.heading));
+  const cosNav = Math.cos(shipState.heading);
+  const sinNav = Math.sin(shipState.heading);
+  
+  const corners = [
+    { x: SHIP_HALF_LENGTH, z: SHIP_HALF_BEAM },
+    { x: SHIP_HALF_LENGTH, z: -SHIP_HALF_BEAM },
+    { x: -SHIP_HALF_LENGTH, z: SHIP_HALF_BEAM },
+    { x: -SHIP_HALF_LENGTH, z: -SHIP_HALF_BEAM }
+  ];
 
-  if (shipState.position.y - shipReachZ < PIER_FACE_Z) {
-    shipState.position.y = PIER_FACE_Z + shipReachZ;
-    shipState.velocity.y *= -0.1;
-    if (Math.abs(shipState.velocity.y) > 0.1) {
-      showCrashWarning('IMPACTO: Panamax no Cais!');
+  let maxPenetration = 0;
+  let isGrindingPier = false;
+
+  corners.forEach(c => {
+    // Vetor do centro do navio ao canto (Global)
+    const rX = c.x * cosNav - c.z * sinNav;
+    const rZ = c.x * sinNav + c.z * cosNav;
+    
+    const cX = shipState.position.x + rX;
+    const cornerZ = shipState.position.y + rZ;
+    
+    // Calcula Z e mecânica consoante o ponto de contato (Defensas vs Betão)
+    let effectivePierZ = PIER_FACE_Z; // -10 (Concreto bruto)
+    let k_pier = 200000; // ton/m (Rigidez extrema do Betão)
+    let d_pier = 100000; // ton/(m/s) (Amortecimento seco)
+    
+    const fenderBases = [-100, -30, 30, 100];
+    const hitFender = fenderBases.some(fx => Math.abs(cX - fx) < 4); // raio 4m para apanhar as defensas de borracha
+    
+    if (hitFender) {
+      effectivePierZ = -7; // Defensas saem 3m do cais de betão
+      k_pier = 20000;      // Borracha esmaga e absorve choque melhor
+      d_pier = 25000;      // Amortecimento viscoso fluido da defesa
+    }
+    
+    if (cornerZ < effectivePierZ) {
+      isGrindingPier = true;
+      const penetration = effectivePierZ - cornerZ;
+      if (penetration > maxPenetration) maxPenetration = penetration;
+      
+      const vCornerZ = shipState.velocity.y + rX * shipState.angularVelocity;
+      
+      let pushZ = k_pier * penetration;
+      if (vCornerZ < 0) {
+        pushZ -= d_pier * vCornerZ; 
+      }
+      
+      if (pushZ < 0) pushZ = 0;
+      
+      shipState.velocity.y += (pushZ / shipState.mass) * dt;
+      
+      // Torque induzido = rX * Fz
+      const pushTorque = rX * pushZ;
+      shipState.angularVelocity += (pushTorque / shipState.inertia) * dt;
+    }
+  });
+
+  if (isGrindingPier) {
+    // Fricção massiva do casco contra o betão do cais impede deslizar infinitamente no eixo X
+    shipState.velocity.x *= 0.95;
+    shipState.angularVelocity *= 0.90; // Amortece rotação enquanto raspa
+  }
+
+  // Correção posicional seca para evitar que o visual atravesse o muro
+  if (maxPenetration > 0) {
+    shipState.position.y += maxPenetration * 0.8;
+    if (Math.abs(shipState.velocity.y) > 0.05) {
+      showCrashWarning('IMPACTO: Casco a roçar no Cais!');
     }
   }
 
@@ -139,15 +198,18 @@ export function checkCollisions(dt = 0.016) {
       const pushZ = normGlobalZ * pushForce;
       
       // Injeciona F=m*a acelerativo instantâneo na massa total de 65.000t do Panamax
-      shipState.velocity.x += (pushX / shipState.mass) * dt;
-      shipState.velocity.y += (pushZ / shipState.mass) * dt;
+      // A normal (normGlobal) aponta do navio PARA o rebocador. Portanto a força NO navio
+      // deve empurrá-lo no sentido OPOSTO (-pushX, -pushZ).
+      shipState.velocity.x -= (pushX / shipState.mass) * dt;
+      shipState.velocity.y -= (pushZ / shipState.mass) * dt;
       
       // Torque indutivo gerado pelo empurrão, convertendo braço r ao centro do navio
       const rGlobalX = cx * cosH - cz * sinH;
       const rGlobalZ = cx * sinH + cz * cosH;
       const pushTorque = (rGlobalX * pushZ) - (rGlobalZ * pushX);
       
-      shipState.angularVelocity += (pushTorque / shipState.inertia) * dt;
+      // Como a força aplicada no navio é inversa, o indutor do torque inverte o sinal
+      shipState.angularVelocity -= (pushTorque / shipState.inertia) * dt;
 
       // Ricochete inelástico para subtrair momento do rebocador em grandes embalos
       const vDotN = ts.velocity.x * normGlobalX + ts.velocity.y * normGlobalZ;

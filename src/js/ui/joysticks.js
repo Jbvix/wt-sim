@@ -26,22 +26,24 @@ export function setupJoysticks() {
   const jsBE      = document.getElementById('joystick-be');
   const sliderBE  = document.getElementById('slider-be');
 
-  btnTwin.addEventListener('click', () => {
-    g.isTwinControl = !g.isTwinControl;
+  if (btnTwin) {
+    btnTwin.addEventListener('click', () => {
+      g.isTwinControl = !g.isTwinControl;
 
-    if (g.isTwinControl) {
-      btnTwin.classList.add('btn-toggle-active');
-      jsBE.classList.add('joystick-ghost');
-      sliderBE.classList.add('joystick-ghost');
-    } else {
-      btnTwin.classList.remove('btn-toggle-active');
-      jsBE.classList.remove('joystick-ghost');
-      sliderBE.classList.remove('joystick-ghost');
-      // Zera BE ao sair do Twin
-      if (g.thrusters?.be) g.thrusters.be.thrust = 0;
-      sliderBE.value = 0;
-    }
-  });
+      if (g.isTwinControl) {
+        btnTwin.classList.add('btn-toggle-active');
+        if(jsBE) jsBE.classList.add('joystick-ghost');
+        if(sliderBE) sliderBE.classList.add('joystick-ghost');
+      } else {
+        btnTwin.classList.remove('btn-toggle-active');
+        if(jsBE) jsBE.classList.remove('joystick-ghost');
+        if(sliderBE) sliderBE.classList.remove('joystick-ghost');
+        // Zera BE ao sair do Twin
+        if (g.thrusters?.be) g.thrusters.be.thrust = 0;
+        if(sliderBE) sliderBE.value = 0;
+      }
+    });
+  }
 }
 
 // ─────────────────────────────────────────────────────────

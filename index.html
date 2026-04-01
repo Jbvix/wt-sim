@@ -26,22 +26,15 @@
   <!-- Folha de estilos externa -->
   <link rel="stylesheet" href="src/css/style.css">
 
-  <!--
-    ImportMap — resolve "three" e "three/addons/" para o CDN.
-    Deve estar no <head> antes de qualquer <script type="module">.
-  -->
-  <script type="importmap">
-    {
-      "imports": {
-        "three":          "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-        "three/addons/":  "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-      }
-    }
-  </script>
+  <!-- Ícone da aba -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚓</text></svg>">
 </head>
 
 <body>
 
+  <!-- Raiz da Aplicação React (HUD Mobile-First) -->
+  <div id="react-root"></div>
+  <script type="module" src="/src/main.jsx"></script>
   <!-- ═════════════════════════════════════════════════════
        ERROS DE SISTEMA (DEV)
        ═══════════════════════════════════════════════════ -->
@@ -162,44 +155,6 @@
        ═══════════════════════════════════════════════════ -->
   <div id="ui-layer">
 
-
-    <!-- ── Barra Superior de Telemetria ───────────────── -->
-    <div id="header-telemetry" class="panel">
-
-      <!-- Tensão do Cabo do Guincho -->
-      <div class="telemetry-data">
-        <div class="telemetry-value" id="ui-tension">0.0 t</div>
-        <div class="telemetry-label">Tensão do Cabo</div>
-      </div>
-
-      <!-- Bússola de Corrente Oceânica -->
-      <div class="telemetry-data"
-           style="display:flex; flex-direction:column; align-items:center; min-width:80px;">
-        <div id="current-compass"
-             style="width:30px; height:30px; border-radius:50%;
-                    border:2px solid var(--accent-color); position:relative;
-                    margin-bottom:2px; opacity:0.2; transition:opacity 0.3s;">
-          <div id="current-arrow"
-               style="position:absolute; width:4px; height:16px;
-                      background:var(--accent-color); top:50%; left:50%;
-                      transform-origin:center bottom; transform:translate(-50%,-100%) rotate(0deg);">
-            <!-- Cabeça da seta -->
-            <div style="position:absolute; top:-4px; left:-3px; width:0; height:0;
-                        border-left:5px solid transparent; border-right:5px solid transparent;
-                        border-bottom:6px solid var(--accent-color);"></div>
-          </div>
-        </div>
-        <div class="telemetry-label" style="font-size:0.6rem;">Deriva Oceânica</div>
-      </div>
-
-      <!-- Comprimento do Cabo Liberado -->
-      <div class="telemetry-data">
-        <div class="telemetry-value" style="color:var(--accent-color);" id="ui-length">10.0 m</div>
-        <div class="telemetry-label">Cabo Liberado</div>
-      </div>
-
-    </div><!-- /#header-telemetry -->
-
     <!-- ── Botões de Zoom da Câmara (lado direito, centro) ── -->
     <div id="camera-controls"
          style="position:absolute; right:20px; top:50%; transform:translateY(-50%);
@@ -214,64 +169,7 @@
                      box-shadow:0 4px 12px rgba(0,0,0,0.8);">-</button>
     </div>
 
-    <!-- ── Painel Atmosfera & Mar (esquerda, abaixo da telemetria) ── -->
-    <div id="weather-panel" class="panel"
-         style="position:absolute; left:20px; top:120px;
-                display:flex; flex-direction:column; width:220px;
-                font-size:0.8rem; pointer-events:auto;">
 
-      <div id="weather-drag-handle" style="font-weight:bold; border-bottom:1px solid rgba(255,255,255,0.2);
-                  padding-bottom:5px; margin-bottom:5px;
-                  display:flex; justify-content:space-between; align-items:center; cursor: move;">
-        <span id="btn-toggle-weather" style="cursor:pointer; padding:5px 0;">▼ Atmosfera &amp; Mar</span>
-        <span id="ui-lights" style="cursor:pointer; color:var(--accent-color);">[ Luzes ]</span>
-      </div>
-
-      <div id="weather-content" style="display:flex; flex-direction:column; gap:8px;">
-        <div><span>Vento (Mag): <span id="val-wind-mag">0</span> kn</span></div>
-        <input type="range" id="sl-wind-mag" min="0" max="60" value="0">
-
-        <div><span>Vento (Dir): <span id="val-wind-dir">0</span>°</span></div>
-        <input type="range" id="sl-wind-dir" min="0" max="359" value="0">
-
-        <div><span>Corrente (Mag): <span id="val-cur-mag">0</span> kn</span></div>
-        <input type="range" id="sl-cur-mag" min="0" max="3" step="0.1" value="0">
-
-        <div><span>Corrente (Dir): <span id="val-cur-dir">0</span>°</span></div>
-        <input type="range" id="sl-cur-dir" min="0" max="359" value="0">
-
-        <div><span>Nevoeiro: <span id="val-fog">0</span>%</span></div>
-        <input type="range" id="sl-fog" min="0" max="100" value="0">
-      </div>
-
-    </div><!-- /#weather-panel -->
-
-    <!-- ── Painel Comando Panamax (direita, abaixo da telemetria) ── -->
-    <div id="ship-panel" class="panel"
-         style="position:absolute; right:20px; top:120px;
-                display:flex; flex-direction:column; width:220px;
-                font-size:0.8rem; pointer-events:auto;">
-
-      <div id="ship-drag-handle" style="font-weight:bold; border-bottom:1px solid rgba(255,255,255,0.2);
-                  padding-bottom:5px; margin-bottom:5px;
-                  display:flex; justify-content:space-between; align-items:center; cursor: move;">
-        <span id="btn-toggle-ship" style="cursor:pointer; padding:5px 0;">▼ Comando Panamax</span>
-        <span style="color:var(--danger-color);">[ SHIP ]</span>
-      </div>
-
-      <div id="ship-content" style="display:flex; flex-direction:column; gap:8px;">
-        <div><span>Motor (Telegrafo): <span id="val-ship-engine">0</span>%</span></div>
-        <input type="range" id="sl-ship-engine" min="-100" max="100" value="0">
-        <button class="winch-btn" id="btn-ship-stop"
-                style="padding:2px 5px; font-size:0.7rem;">PARAR MÁQUINA</button>
-
-        <div style="margin-top:5px;"><span>Leme (Rudder): <span id="val-ship-rudder">0</span>°</span></div>
-        <input type="range" id="sl-ship-rudder" min="-35" max="35" value="0">
-        <button class="winch-btn" id="btn-ship-midships"
-                style="padding:2px 5px; font-size:0.7rem;">A MEIO (0°)</button>
-      </div>
-
-    </div><!-- /#ship-panel -->
 
     <!-- ── Mensagem de Estado (centro, pulsante) ─────────── -->
     <div id="status-message">Selecione o Cabeço no Cais</div>
@@ -291,36 +189,6 @@
         </div>
       </div>
 
-      <!-- Painel do Guincho / Rebocador — Centro (Flutuante/Movível) -->
-      <div id="winch-panel" class="panel" style="position:absolute; left:calc(50% - 110px); bottom:20px; z-index:100; min-width: 220px; touch-action: none;">
-        
-        <!-- Area de Arraste -->
-        <div id="winch-drag-handle" style="cursor: move; display:flex; flex-direction:column; align-items:center; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:8px; margin-bottom:8px;">
-          <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-            <div class="telemetry-label" style="pointer-events:none;">⚓ Guincho / Rebocador</div>
-            <button id="btn-toggle-winch" style="background:none; border:none; color:#fff; cursor:pointer;">▼</button>
-          </div>
-        </div>
-
-        <div id="winch-content" style="display:flex; flex-direction:column;">
-          <button class="winch-btn" id="btn-switch-tug"
-                  style="background-color:var(--danger-color); padding:8px 18px; width: 100%; cursor: pointer;
-                         font-weight:bold; border:2px solid white; white-space:nowrap; margin-bottom: 10px;">
-            REBOCADOR POPA
-          </button>
-          
-          <div style="display:flex; justify-content:space-between; width:100%;
-                      align-items:center; margin-bottom:5px;">
-            <div class="telemetry-label">Guincho / Leme</div>
-            <button class="winch-btn" id="btn-twin"
-                    style="width:auto; padding:2px 8px; font-size:0.7rem; cursor: pointer;">Twin Mode</button>
-          </div>
-          <button class="winch-btn btn-disconnect" id="btn-disconnect" style="margin-bottom: 5px;">Desconectar</button>
-          <button class="winch-btn" id="btn-heave" style="margin-bottom: 5px;">▲ Colher (Heave)</button>
-          <button class="winch-btn btn-brake btn-toggle-active" id="btn-brake" style="margin-bottom: 5px;">Freio: Travado</button>
-          <button class="winch-btn" id="btn-pay">▼ Pagar (Pay)</button>
-        </div>
-      </div>
 
       <!-- Joystick Estibordo (BE) — direita -->
       <div class="joystick-wrapper">
@@ -399,8 +267,8 @@
         <input type="range" id="cal-tug-drag" min="0.80" max="0.99" step="0.01" value="0.96" style="width: 100%;">
       </div>
       <div style="margin-bottom: 10px;">
-        <label>Bollard Pull Múltiplo: <span id="vcal-tug-thrust">0.8</span> (&sim;160T)</label>
-        <input type="range" id="cal-tug-thrust" min="0.1" max="5.0" step="0.1" value="0.8" style="width: 100%;">
+        <label>Bollard Pull Múltiplo: <span id="vcal-tug-thrust">0.4</span> (&sim;80T)</label>
+        <input type="range" id="cal-tug-thrust" min="0.1" max="5.0" step="0.1" value="0.4" style="width: 100%;">
       </div>
       <div style="margin-bottom: 10px;">
         <label>Força Skeg (Quilha): <span id="vcal-tug-skeg">5.0</span></label>

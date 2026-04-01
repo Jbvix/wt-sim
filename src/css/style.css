@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 /**
  * @file        src/css/style.css
  * @description Estilos globais do WT-SIM — Design tokens, HUD, Joysticks,
@@ -10,6 +12,13 @@
 /* ═══════════════════════════════════════════════════════
  * 1. DESIGN TOKENS
  * ═══════════════════════════════════════════════════════ */
+
+@theme {
+  --color-ui-bg: rgba(15, 23, 42, 0.8);
+  --color-accent: #38bdf8;
+  --color-danger: #ef4444;
+  --color-safe: #22c55e;
+}
 
 :root {
   --ui-bg:          rgba(15, 23, 42, 0.8);
@@ -124,11 +133,21 @@ canvas {
  * ═══════════════════════════════════════════════════════ */
 
 #footer-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100vw;
+  box-sizing: border-box;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin: 10px;
+  padding: 10px;
   padding-bottom: 20px; /* Margem para iOS home bar */
+  pointer-events: none; /* Deixa cliques vazios passar */
+}
+
+#footer-controls > * {
+  pointer-events: auto; /* Reativa cliques nos items (joysticks) */
 }
 
 /* Wrapper vertical: HUD + Dial + Slider */

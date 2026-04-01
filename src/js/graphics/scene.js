@@ -31,7 +31,7 @@ export function setupGraphics() {
     1,
     3000
   );
-  g.camera.position.set(0, 80, 20); // Vista panorâmica inicial
+  g.camera.position.set(-80, 80, 250); // Vista panorâmica ampla para o Navio (Sprint 1)
 
   // Renderer WebGL com anti-aliasing e buffer logarítmico (reduz z-fighting)
   g.renderer = new THREE.WebGLRenderer({

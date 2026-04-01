@@ -1,5 +1,40 @@
 {
   "dependencies": {
-    "acorn": "^8.16.0"
+    "acorn": "^8.16.0",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.38.0",
+    "gsap": "^3.14.2",
+    "lucide-react": "^1.7.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwind-merge": "^3.5.0",
+    "three": "^0.160.0"
+  },
+  "name": "wt-sim",
+  "version": "1.0.0",
+  "description": "> Simulador 3D para navegadores marítimos de operações de rebocagem portuária com rebocadores azimutais, física catenária de cabos HMPE, interações avançadas de amarração dinâmica, e modelo Panamax de fluidos. **Alojado e em produção no Netlify.**",
+  "main": "sw.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jbvix/wt-sim.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Jbvix/wt-sim/issues"
+  },
+  "homepage": "https://github.com/Jbvix/wt-sim#readme",
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.2.2",
+    "@vitejs/plugin-react": "^6.0.1",
+    "tailwindcss": "^4.2.2",
+    "vite": "^8.0.3"
   }
 }

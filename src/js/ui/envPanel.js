@@ -31,24 +31,29 @@ export function setupEnvironmentPanel() {
     const slider  = document.getElementById(sliderId);
     const display = document.getElementById(outId);
 
-    slider.addEventListener('input', (e) => {
-      const val = parse(e.target.value);
-      display.innerText  = val;
-      envState[key]      = val;
-      if (key === 'fogDensity') updateFog();
-    });
+    if (slider && display) {
+      slider.addEventListener('input', (e) => {
+        const val = parse(e.target.value);
+        display.innerText  = val;
+        envState[key]      = val;
+        if (key === 'fogDensity') updateFog();
+      });
+    }
   });
 
   // Toggle de Luzes de Navegação
-  document.getElementById('ui-lights').addEventListener('click', () => {
-    envState.lightsOn = !envState.lightsOn;
-    document.getElementById('ui-lights').style.color = envState.lightsOn
-      ? '#ffeb3b'
-      : 'var(--accent-color)';
-    g.navLights.forEach(light => {
-      light.intensity = envState.lightsOn ? light.userData.baseIntensity : 0;
+  const btnLights = document.getElementById('ui-lights');
+  if (btnLights) {
+    btnLights.addEventListener('click', () => {
+      envState.lightsOn = !envState.lightsOn;
+      btnLights.style.color = envState.lightsOn
+        ? '#ffeb3b'
+        : 'var(--accent-color)';
+      g.navLights.forEach(light => {
+        light.intensity = envState.lightsOn ? light.userData.baseIntensity : 0;
+      });
     });
-  });
+  }
 
   // ── Painel ocultável (Mobile-First collapse) ──────────────
 
@@ -56,6 +61,7 @@ export function setupEnvironmentPanel() {
   const weatherContent = document.getElementById('weather-content');
 
   const toggleWeatherPanel = (forceClose = false) => {
+    if (!weatherContent || !weatherBtn) return;
     const isHidden = weatherContent.style.display === 'none';
     if (isHidden && !forceClose) {
       weatherContent.style.display = 'flex';
@@ -66,10 +72,12 @@ export function setupEnvironmentPanel() {
     }
   };
 
-  weatherBtn.addEventListener('click', () => toggleWeatherPanel(false));
+  if (weatherBtn) {
+    weatherBtn.addEventListener('click', () => toggleWeatherPanel(false));
+  }
 
   // Começa fechado em ecrans pequenos
-  if (window.innerWidth <= 850) toggleWeatherPanel(true);
+  if (window.innerWidth <= 850 && weatherBtn) toggleWeatherPanel(true);
 }
 
 // ─────────────────────────────────────────────────────────
@@ -102,8 +110,9 @@ export function updateFog() {
 export function animateWindsock() {
   if (!g.windsockFabric) return;
 
-  const windRads = envState.windDir * Math.PI / 180;
-  g.windsockFabric.rotation.y = -windRads;
+  // Alinhamento Visual-Físico (Nautical -> Trig -> ThreeJS Rotation)
+  const physicsWindRads = (envState.windDir - 90) * Math.PI / 180;
+  g.windsockFabric.rotation.y = -physicsWindRads;
 
   // 0 nós = pendulo vertical; 60 nós = horizontal
   const droop = Math.max(0, Math.min(1, (60 - envState.windMag) / 60));

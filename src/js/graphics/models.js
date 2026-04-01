@@ -242,6 +242,20 @@ export function buildWorld() {
   g.pier.receiveShadow = true;
   g.scene.add(g.pier);
 
+  // ── B.1 Defensas Cilíndricas Yokohama ─────────────────
+  
+  [-100, -30, 30, 100].forEach(xPos => {
+    const fender = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.5, 1.5, 6, 16),
+      new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 })
+    );
+    // Face do cais: Z=-10. Centro do cilindro: Z=-8.5. Aba de fora do cilindro: Z=-7
+    fender.position.set(xPos, 2.5, -8.5); 
+    fender.castShadow = true;
+    fender.receiveShadow = true;
+    g.scene.add(fender);
+  });
+
   // ── C. Cabeços do Cais ────────────────────────────────
 
   [-150, -100, -50, 0, 50, 100, 150].forEach(xPos => {

@@ -171,17 +171,21 @@ export function createBuoys() {
  *
  * @param {number} dt - Delta time em segundos
  */
+let buoyTime = 0;
+
 export function updateBuoys(dt) {
   if (!g.buoys || g.buoys.length === 0) return;
 
-  // Vetor de vento (m/s) no referencial global
-  const windRads = envState.windDir * Math.PI / 180;
+  buoyTime += dt;
+
+  // Vetor de vento (m/s) no referencial global (Nautical to Trig: -90)
+  const windRads = (envState.windDir - 90) * Math.PI / 180;
   const windMps  = envState.windMag * 0.5144;
   const windX = windMps * Math.cos(windRads);
   const windZ = windMps * Math.sin(windRads);
 
-  // Vetor de corrente (m/s) no referencial global
-  const curRads = envState.currentDir * Math.PI / 180;
+  // Vetor de corrente (m/s) no referencial global (Nautical to Trig: -90)
+  const curRads = (envState.currentDir - 90) * Math.PI / 180;
   const curMps  = envState.currentMag * 0.5144;
   const curX = curMps * Math.cos(curRads);
   const curZ = curMps * Math.sin(curRads);
@@ -200,5 +204,10 @@ export function updateBuoys(dt) {
 
     b.pivot.rotation.x += (targetTiltX - b.pivot.rotation.x) * alpha;
     b.pivot.rotation.z += (targetTiltZ - b.pivot.rotation.z) * alpha;
+
+    // Bobbing dinâmico (movimento vertical) desfasado pela coordenada cartográfica para efeito de mar
+    const wavePhase = (b.position.x * 0.1) + (b.position.z * 0.05);
+    const bobOffset = Math.sin(buoyTime * 1.5 + wavePhase) * 0.35; // 0.35m amplitude
+    b.mesh.position.y = bobOffset;
   });
 }

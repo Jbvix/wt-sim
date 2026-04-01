@@ -54,32 +54,38 @@ export function setupWinchPanel() {
 
   const startHeave = (e) => { e.preventDefault(); g.ropeState.winchAction = 1;  autoEngageBrake(); };
   const stopHeave  = (e) => { e.preventDefault(); g.ropeState.winchAction = 0; };
-  btnHeave.addEventListener('mousedown', startHeave);
-  btnHeave.addEventListener('touchstart', startHeave);
-  btnHeave.addEventListener('mouseup',    stopHeave);
-  btnHeave.addEventListener('touchend',   stopHeave);
-  btnHeave.addEventListener('mouseleave', stopHeave);
+  if (btnHeave) {
+    btnHeave.addEventListener('mousedown', startHeave);
+    btnHeave.addEventListener('touchstart', startHeave);
+    btnHeave.addEventListener('mouseup',    stopHeave);
+    btnHeave.addEventListener('touchend',   stopHeave);
+    btnHeave.addEventListener('mouseleave', stopHeave);
+  }
 
   const startPay = (e) => { e.preventDefault(); g.ropeState.winchAction = -1; autoEngageBrake(); };
   const stopPay  = (e) => { e.preventDefault(); g.ropeState.winchAction = 0; };
-  btnPay.addEventListener('mousedown', startPay);
-  btnPay.addEventListener('touchstart', startPay);
-  btnPay.addEventListener('mouseup',    stopPay);
-  btnPay.addEventListener('touchend',   stopPay);
-  btnPay.addEventListener('mouseleave', stopPay);
+  if (btnPay) {
+    btnPay.addEventListener('mousedown', startPay);
+    btnPay.addEventListener('touchstart', startPay);
+    btnPay.addEventListener('mouseup',    stopPay);
+    btnPay.addEventListener('touchend',   stopPay);
+    btnPay.addEventListener('mouseleave', stopPay);
+  }
 
   // ── Freio (Toggle) ────────────────────────────────────
 
-  btnBrake.addEventListener('click', () => {
-    g.ropeState.brakeEngaged = !g.ropeState.brakeEngaged;
-    if (g.ropeState.brakeEngaged) {
-      btnBrake.classList.add('btn-toggle-active');
-      btnBrake.innerText = 'Freio: Travado';
-    } else {
-      btnBrake.classList.remove('btn-toggle-active');
-      btnBrake.innerText = 'Freio: Solto';
-    }
-  });
+  if (btnBrake) {
+    btnBrake.addEventListener('click', () => {
+      g.ropeState.brakeEngaged = !g.ropeState.brakeEngaged;
+      if (g.ropeState.brakeEngaged) {
+        btnBrake.classList.add('btn-toggle-active');
+        btnBrake.innerText = 'Freio: Travado';
+      } else {
+        btnBrake.classList.remove('btn-toggle-active');
+        btnBrake.innerText = 'Freio: Solto';
+      }
+    });
+  }
 
   // ── Desconectar (com interlock de segurança) ──────────
 
@@ -107,9 +113,11 @@ export function setupWinchPanel() {
       g.ropeState.status           = 0;
       g.ropeState.connectedBollard = null;
       g.ropeLine.visible           = false;
-      btnDisconnect.style.display  = 'none';
+      if (btnDisconnect) btnDisconnect.style.display  = 'none';
     }
   };
 
-  btnDisconnect.addEventListener('click', window.attemptDisconnect);
+  if (btnDisconnect) {
+    btnDisconnect.addEventListener('click', window.attemptDisconnect);
+  }
 }

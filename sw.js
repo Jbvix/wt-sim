@@ -38,6 +38,9 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
+  // Ignorar pedidos que não são HTTP ou HTTPS (ex: chrome-extension://)
+  if (!url.protocol.startsWith('http')) return;
+
   // Interceptar modelos pesados (GLB / GLTF) e outras mídias
   if (url.pathname.endsWith('.glb') || url.pathname.endsWith('.gltf') || url.pathname.endsWith('.png')) {
     event.respondWith(

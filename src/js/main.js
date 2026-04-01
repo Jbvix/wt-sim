@@ -427,9 +427,17 @@ function animate(timestamp) {
         tRope.connectedBollard.getWorldPosition(endPos);
 
         // Ponto de controle da Bézier — catenária invertida correta: Alta tensão = Sag 0.
-        // Se tension < 1, Sag = max (ex: 5). Se tension > 10, Sag = 0.
+        const distance = startPos.distanceTo(endPos);
+        const slack = tRope.lengthL0 - distance;
+        
         let sag = 5 - (tRope.tension * 0.5);
-        if (sag < 0) sag = 0; 
+        
+        if (slack > 0) {
+          // Quando sobra cabo (PAY) a barriga da catenária aumenta gradativamente.
+          sag = 5 + (slack * 0.8);
+        }
+        
+        if (sag < 0) sag = 0; // Cabo totalmente esticado não tem barriga
         
         const half  = new THREE.Vector3().lerpVectors(startPos, endPos, 0.5);
         const ctrl  = new THREE.Vector3(half.x, Math.min(startPos.y, endPos.y) - sag, half.z);
@@ -465,10 +473,27 @@ function animate(timestamp) {
       line.pierRef.getWorldPosition(endPos);
 
       const half = new THREE.Vector3().lerpVectors(startPos, endPos, 0.5);
-      const ctrl = new THREE.Vector3(half.x, Math.min(startPos.y, endPos.y) - 1, half.z);
+      
+      const distance = startPos.distanceTo(endPos);
+      const slack = line.lengthL0 - distance;
+      
+      let sag = 2 - (line.tension * 0.05); // Tensões esticam a espia retirando a barriga
+      if (slack > 0) sag = 2 + (slack * 0.8);
+      if (sag < 0) sag = 0; // Totalmente tesa
+      
+      const ctrl = new THREE.Vector3(half.x, Math.min(startPos.y, endPos.y) - sag, half.z);
       const pts  = new THREE.QuadraticBezierCurve3(startPos, ctrl, endPos).getPoints(20);
 
       line.ropeLine.geometry.setFromPoints(pts);
+      
+      if (line.tension > 250) {
+        line.ropeLine.material.color.setHex(0xff0000); // Perigo, muito tesa
+      } else if (line.tension > 20) {
+        line.ropeLine.material.color.setHex(0xffff00); // Trabalhando sob carga
+      } else {
+        line.ropeLine.material.color.setHex(line.color); // Relaxada
+      }
+
       line.ropeLine.visible = true;
     });
 
@@ -635,7 +660,7 @@ function handleInteraction(userData) {
     g.ropeState.status           = 2;
     g.ropeState.connectedBollard = userData.ref;
     msgEl.style.display          = 'none';
-    btnDisconn.style.display     = 'block';
+    if (btnDisconn) btnDisconn.style.display     = 'block';
 
     // Comprimento inicial = distância exata no momento da ligação
     const wPos = new THREE.Vector3();

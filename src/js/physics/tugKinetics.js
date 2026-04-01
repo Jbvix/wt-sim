@@ -66,7 +66,7 @@ export function updatePhysics(dt) {
 
   // ── 2. Corrente Oceânica (vetor global) ───────────────
 
-  const curRads = envState.currentDir * Math.PI / 180;
+  const curRads = (envState.currentDir - 90) * Math.PI / 180;
   const curX = (envState.currentMag * 0.5144) * Math.cos(curRads);
   const curZ = (envState.currentMag * 0.5144) * Math.sin(curRads);
 
@@ -93,7 +93,9 @@ export function updatePhysics(dt) {
       // Atuação do guincho (Heave / Pay)
       if (tRope.winchAction ===  1) tRope.lengthL0 -= tRope.winchSpeed * dt;
       if (tRope.winchAction === -1) tRope.lengthL0 += tRope.winchSpeed * dt;
+      // Limites Físicos do Tambor (Guincho) HMPE: Min 0m, Max 200m
       if (tRope.lengthL0 < 0) tRope.lengthL0 = 0;
+      if (tRope.lengthL0 > 200) tRope.lengthL0 = 200;
 
       const winchPos = new THREE.Vector3();
       if (tMeshes.winchDrum) tMeshes.winchDrum.getWorldPosition(winchPos);
@@ -105,9 +107,9 @@ export function updatePhysics(dt) {
       const dz = bolPos.z - winchPos.z;
       const distance = Math.hypot(dx, dz);
 
-      // Freio solto → comprimento frouxo acompanha a distância
+      // Freio solto → comprimento frouxo acompanha a distância (limite total de 200m)
       if (!tRope.brakeEngaged && distance > tRope.lengthL0) {
-        tRope.lengthL0 = distance;
+        tRope.lengthL0 = Math.min(distance, 200);
       }
 
       if (distance > tRope.lengthL0 && tRope.lengthL0 > 0) {
@@ -171,7 +173,7 @@ export function updatePhysics(dt) {
 
       if (t.thrust > 0) {
         // Cada Thruster impulsiona até 80-100% * Multiplicador
-        const force = t.thrust * devConfig.tugThrustMultiplier * 100; // Se thrustMultiplier=0.8 e t.thrust=1.0 -> 80 Ton-Force
+        const force = t.thrust * devConfig.tugThrustMultiplier * 100; // Se thrustMultiplier=0.4 e t.thrust=1.0 -> 40 Ton-Force (Total 80 Ton-Force)
         const fX = force * Math.cos(t.angle);
         const fZ = force * Math.sin(t.angle);
 
@@ -205,7 +207,7 @@ export function updatePhysics(dt) {
 
     // ── 3c. Força do Vento no Rebocador ──────────────────
 
-    const windRads = envState.windDir * Math.PI / 180;
+    const windRads = (envState.windDir - 90) * Math.PI / 180;
     const windMps  = envState.windMag * 0.5144;
     const wX = windMps * Math.cos(windRads);
     const wZ = windMps * Math.sin(windRads);
@@ -255,6 +257,14 @@ export function updatePhysics(dt) {
     tState.velocity.x        = (dampedLX * cosH - dampedLZ * sinH) + curX;
     tState.velocity.y        = (dampedLX * sinH + dampedLZ * cosH) + curZ;
     tState.angularVelocity  *= Math.pow(devConfig.tugDragRot, dt);
+
+    // Cap max velocity to 12 knots (em m/s)
+    const MAX_TUG_SPEED = 12 * 0.514444;
+    const tugSpeedMag = Math.hypot(tState.velocity.x, tState.velocity.y);
+    if (tugSpeedMag > MAX_TUG_SPEED) {
+      tState.velocity.x = (tState.velocity.x / tugSpeedMag) * MAX_TUG_SPEED;
+      tState.velocity.y = (tState.velocity.y / tugSpeedMag) * MAX_TUG_SPEED;
+    }
   });
 
   // ── 4. Atualiza posições e meshes dos rebocadores ─────
@@ -304,9 +314,9 @@ export function updatePhysics(dt) {
       const vBolZ = shipState.velocity.y + bGlobal_rX * shipState.angularVelocity;
       const vStretch = (0 - vBolX) * dirX + (0 - vBolZ) * dirZ; // cais estático
 
-      let tension = 60 * stretch + 250 * vStretch; // k=60 t/m, damp=250 — prev: 400/800 (explodia)
+      let tension = 100 * stretch + 300 * vStretch; // Linhas mais rígidas (k=100, b=300)
       if (tension < 0) tension = 0;
-      if (tension > 350) tension = 350;             // CAP: carga de rotura espia HMPE
+      if (tension > 1500) tension = 1500;             // CAP muito mais alto para absorver a força absurda do vento no Broadside
       line.tension = tension;
 
       if (tension > 0) {
@@ -340,7 +350,7 @@ export function updatePhysics(dt) {
   }
 
   // Força do Vento no navio (Deriva Aerodinâmica Quadrática F = 1/2 * rho * Cd * A * V^2 / 1000)
-  const windRads = envState.windDir * Math.PI / 180;
+  const windRads = (envState.windDir - 90) * Math.PI / 180;
   const windMps  = envState.windMag * 0.5144;
   
   // Velocidade local relativa do vento
@@ -387,6 +397,14 @@ export function updatePhysics(dt) {
   shipState.velocity.y      += (shipForceGlobal.y / shipState.mass) * dt;
   shipState.angularVelocity += (shipTorque         / shipState.inertia) * dt;
 
+  // Cap max velocity to 23 knots (em m/s)
+  const MAX_SHIP_SPEED = 23 * 0.514444;
+  const shipSpeedMag = Math.hypot(shipState.velocity.x, shipState.velocity.y);
+  if (shipSpeedMag > MAX_SHIP_SPEED) {
+    shipState.velocity.x = (shipState.velocity.x / shipSpeedMag) * MAX_SHIP_SPEED;
+    shipState.velocity.y = (shipState.velocity.y / shipSpeedMag) * MAX_SHIP_SPEED;
+  }
+
   // Hard cap na velocidade angular APÓS integração (≈3.4°/s — valor náutico plausível)
   const MAX_SHIP_ANG_VEL = 0.06; // rad/s
   if      (shipState.angularVelocity >  MAX_SHIP_ANG_VEL) shipState.angularVelocity =  MAX_SHIP_ANG_VEL;
@@ -414,13 +432,19 @@ export function updatePhysics(dt) {
 
   if (!g.ropeState) return;
 
-  document.getElementById('ui-tension').innerText = g.ropeState.tension.toFixed(1) + ' t';
-  document.getElementById('ui-length').innerText  = g.ropeState.lengthL0.toFixed(1) + ' m';
-
   const tensionEl = document.getElementById('ui-tension');
-  if      (g.ropeState.tension > 90) tensionEl.style.color = 'var(--danger-color)';
-  else if (g.ropeState.tension > 45) tensionEl.style.color = '#eab308';
-  else                               tensionEl.style.color = 'var(--safe-color)';
+  const lengthEl  = document.getElementById('ui-length');
+
+  if (tensionEl) {
+    tensionEl.innerText = g.ropeState.tension.toFixed(1) + ' t';
+    if      (g.ropeState.tension > 90) tensionEl.style.color = 'var(--danger-color)';
+    else if (g.ropeState.tension > 45) tensionEl.style.color = '#eab308';
+    else                               tensionEl.style.color = 'var(--safe-color)';
+  }
+
+  if (lengthEl) {
+    lengthEl.innerText = g.ropeState.lengthL0.toFixed(1) + ' m';
+  }
 
   ['bb', 'be'].forEach(side => {
     if (!g.thrusters) return;

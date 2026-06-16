@@ -81,11 +81,16 @@ const SHIP_BOW_SIDE_BOLLARD_Z = 9.5;
 const SHIP_OUTBOARD_SIDE_BOLLARD_Z = 17.0;
 const SHIP_BOW_SIDE_BOLLARD_Y = 14.75;
 const SHIP_OUTBOARD_SIDE_BOLLARD_Y = 14.75;
-/** Posição da superestrutura/ponte do Panamax para luzes de navegação. */
-const SHIP_SUPERSTRUCTURE_X = -90;
-const SHIP_BRIDGE_NAV_LIGHT_Y = 32;
-const SHIP_BRIDGE_NAV_LIGHT_Z = 9;
-const SHIP_MAST_NAV_LIGHT_Y = 42;
+/** Posição da superestrutura/ponte do Panamax para luzes de navegação.
+ *  Medido empiricamente no GLB: a mesh "Ship_Bridge_0" (mais alta, topo ~37.7m)
+ *  centra-se em x≈+41, z≈0. As luzes são ancoradas aqui para assentarem no
+ *  passadiço em vez de flutuarem no extremo oposto do casco. */
+const SHIP_SUPERSTRUCTURE_X = 41;
+const SHIP_BRIDGE_NAV_LIGHT_Y = 34;   // junto ao topo do passadiço (asas da ponte)
+const SHIP_BRIDGE_NAV_LIGHT_Z = 11;   // asa de bombordo/boreste da ponte
+const SHIP_MAST_NAV_LIGHT_Y = 41;     // mastro, acima do teto do passadiço
+const SHIP_STERN_NAV_LIGHT_X = -108;  // luz de alcançado na popa
+const SHIP_STERN_NAV_LIGHT_Y = 16;    // ao nível do convés
 
 // ─────────────────────────────────────────────────────────
 // 2. FUNÇÃO AUXILIAR — Luzes de Navegação
@@ -467,7 +472,7 @@ export function buildWorld() {
   createNavLight(g.merchantShip, 0xff0000, SHIP_SUPERSTRUCTURE_X, SHIP_BRIDGE_NAV_LIGHT_Y, -SHIP_BRIDGE_NAV_LIGHT_Z, 400); // BB
   createNavLight(g.merchantShip, 0x00ff00, SHIP_SUPERSTRUCTURE_X, SHIP_BRIDGE_NAV_LIGHT_Y, SHIP_BRIDGE_NAV_LIGHT_Z, 400); // BE
   createNavLight(g.merchantShip, 0xffffff, SHIP_SUPERSTRUCTURE_X, SHIP_MAST_NAV_LIGHT_Y, 0, 800); // Mastro
-  createNavLight(g.merchantShip, 0xffffff, -112.5, 10,  0, 400); // Popa
+  createNavLight(g.merchantShip, 0xffffff, SHIP_STERN_NAV_LIGHT_X, SHIP_STERN_NAV_LIGHT_Y, 0, 400); // Popa
 
   // Posiciona navio de acordo com o estado físico inicial
   g.merchantShip.position.set(shipState.position.x, 0, shipState.position.y);

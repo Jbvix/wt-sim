@@ -7,23 +7,23 @@ function assert(condition, message) {
 }
 
 assert(
-  /const\s+SHIP_SUPERSTRUCTURE_X\s*=\s*-90/.test(models),
-  'ship navigation lights must be anchored at the superstructure x position'
+  /const\s+SHIP_SUPERSTRUCTURE_X\s*=\s*41\b/.test(models),
+  'ship navigation lights must be anchored at the real superstructure x position (Ship_Bridge_0 ≈ +41)'
 );
 
 assert(
-  /const\s+SHIP_BRIDGE_NAV_LIGHT_Y\s*=\s*32/.test(models),
+  /const\s+SHIP_BRIDGE_NAV_LIGHT_Y\s*=\s*34\b/.test(models),
   'ship side navigation lights must sit high on the bridge wings'
 );
 
 assert(
-  /const\s+SHIP_BRIDGE_NAV_LIGHT_Z\s*=\s*9/.test(models),
-  'ship side navigation lights must move inboard onto the superstructure'
+  /const\s+SHIP_BRIDGE_NAV_LIGHT_Z\s*=\s*11\b/.test(models),
+  'ship side navigation lights must sit on the bridge wings (inboard of the beam)'
 );
 
 assert(
-  /const\s+SHIP_MAST_NAV_LIGHT_Y\s*=\s*42/.test(models),
-  'ship mast navigation light must sit above the superstructure'
+  /const\s+SHIP_MAST_NAV_LIGHT_Y\s*=\s*41\b/.test(models),
+  'ship mast navigation light must sit above the superstructure roof'
 );
 
 assert(
@@ -39,6 +39,11 @@ assert(
 assert(
   /createNavLight\(g\.merchantShip,\s*0xffffff,\s*SHIP_SUPERSTRUCTURE_X,\s*SHIP_MAST_NAV_LIGHT_Y,\s*0,\s*800\)/.test(models),
   'mast navigation light must be centered above the superstructure'
+);
+
+assert(
+  /createNavLight\(g\.merchantShip,\s*0xffffff,\s*SHIP_STERN_NAV_LIGHT_X,\s*SHIP_STERN_NAV_LIGHT_Y,\s*0,\s*400\)/.test(models),
+  'stern navigation light must sit at the stern at deck level'
 );
 
 console.log('Ship navigation light position checks OK');

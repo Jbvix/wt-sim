@@ -7,12 +7,12 @@ function assert(condition, message) {
 }
 
 assert(
-  /const\s+SHIP_SUPERSTRUCTURE_X\s*=\s*41\b/.test(models),
-  'ship navigation lights must be anchored at the real superstructure x position (Ship_Bridge_0 ≈ +41)'
+  /const\s+SHIP_SUPERSTRUCTURE_X\s*=\s*-8\b/.test(models),
+  'ship navigation lights must be anchored at the calibrated superstructure x position'
 );
 
 assert(
-  /const\s+SHIP_BRIDGE_NAV_LIGHT_Y\s*=\s*34\b/.test(models),
+  /const\s+SHIP_BRIDGE_NAV_LIGHT_Y\s*=\s*27\.5\b/.test(models),
   'ship side navigation lights must sit high on the bridge wings'
 );
 
@@ -22,7 +22,7 @@ assert(
 );
 
 assert(
-  /const\s+SHIP_MAST_NAV_LIGHT_Y\s*=\s*41\b/.test(models),
+  /const\s+SHIP_MAST_NAV_LIGHT_Y\s*=\s*34\.5\b/.test(models),
   'ship mast navigation light must sit above the superstructure roof'
 );
 

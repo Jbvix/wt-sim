@@ -82,15 +82,14 @@ const SHIP_OUTBOARD_SIDE_BOLLARD_Z = 17.0;
 const SHIP_BOW_SIDE_BOLLARD_Y = 14.75;
 const SHIP_OUTBOARD_SIDE_BOLLARD_Y = 14.75;
 /** Posição da superestrutura/ponte do Panamax para luzes de navegação.
- *  Medido empiricamente no GLB: a mesh "Ship_Bridge_0" (mais alta, topo ~37.7m)
- *  centra-se em x≈+41, z≈0. As luzes são ancoradas aqui para assentarem no
- *  passadiço em vez de flutuarem no extremo oposto do casco. */
-const SHIP_SUPERSTRUCTURE_X = 41;
-const SHIP_BRIDGE_NAV_LIGHT_Y = 34;   // junto ao topo do passadiço (asas da ponte)
-const SHIP_BRIDGE_NAV_LIGHT_Z = 11;   // asa de bombordo/boreste da ponte
-const SHIP_MAST_NAV_LIGHT_Y = 41;     // mastro, acima do teto do passadiço
-const SHIP_STERN_NAV_LIGHT_X = -108;  // luz de alcançado na popa
-const SHIP_STERN_NAV_LIGHT_Y = 16;    // ao nível do convés
+ *  Valores calibrados visualmente (painel auxiliar) para assentarem no passadiço
+ *  do GLB em vez de flutuarem sobre a água. */
+const SHIP_SUPERSTRUCTURE_X = -8;
+const SHIP_BRIDGE_NAV_LIGHT_Y = 27.5;  // altura das asas da ponte (BB/BE)
+const SHIP_BRIDGE_NAV_LIGHT_Z = 11;    // afastamento lateral BB/BE
+const SHIP_MAST_NAV_LIGHT_Y = 34.5;    // mastro, acima do teto do passadiço
+const SHIP_STERN_NAV_LIGHT_X = -108;   // luz de alcançado na popa
+const SHIP_STERN_NAV_LIGHT_Y = 16;     // ao nível do convés
 
 // ─────────────────────────────────────────────────────────
 // 2. FUNÇÃO AUXILIAR — Luzes de Navegação

@@ -293,7 +293,7 @@ async function init() {
   console.log('DEBUG: Iniciando Pré-Load de Assets...');
 
   try {
-    // 1. Aguarda que o Loader Manager (96MB de ficheiros GLB) termine
+    // 1. Aguarda que o Loader Manager termine (GLB Draco+WebP, ~6.7MB no total)
     await loadAllAssets();
     console.log('DEBUG: Pré-load concluído. Instanciando Mundo...');
   } catch (error) {

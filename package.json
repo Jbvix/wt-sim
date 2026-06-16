@@ -16,8 +16,11 @@
   "main": "sw.js",
   "scripts": {
     "dev": "vite",
+    "lint": "node lint.mjs",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check": "npm run lint && npm run build",
+    "audit": "npm audit"
   },
   "repository": {
     "type": "git",
@@ -25,7 +28,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "commonjs",
   "bugs": {
     "url": "https://github.com/Jbvix/wt-sim/issues"

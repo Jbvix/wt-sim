@@ -9,7 +9,6 @@
  */
 
 import * as THREE from 'three';
-import { Water }         from 'three/addons/objects/Water.js';
 import { Line2 }         from 'three/addons/lines/Line2.js';
 import { LineGeometry }  from 'three/addons/lines/LineGeometry.js';
 import { LineMaterial }  from 'three/addons/lines/LineMaterial.js';
@@ -17,6 +16,7 @@ import { g, shipState, mooringLines } from '../state/globals.js';
 import { tugs } from '../fleet/tugData.js';
 import { createBuoys } from './buoys.js';
 import { modelsCache } from './assets.js';
+import { createOcean } from './water.js';
 
 // ─────────────────────────────────────────────────────────
 // 0. FÁBRICA DE CABOS COM ESPESSURA (Line2 / fat lines)
@@ -75,6 +75,17 @@ const BOLLARD_MAT = new THREE.MeshStandardMaterial({
 const HIT_MAT = new THREE.MeshBasicMaterial({ visible: false });
 /** Hitbox esférica para deteção de cliques. */
 const HIT_GEO = new THREE.SphereGeometry(4.5, 16, 16);
+/** Offset lateral dos cabeços de proa, mantido dentro do convés visual. */
+const SHIP_BOW_SIDE_BOLLARD_Z = 9.5;
+/** Offset lateral mais externo para espringues e lançantes de popa ficarem visíveis. */
+const SHIP_OUTBOARD_SIDE_BOLLARD_Z = 17.0;
+const SHIP_BOW_SIDE_BOLLARD_Y = 14.75;
+const SHIP_OUTBOARD_SIDE_BOLLARD_Y = 14.75;
+/** Posição da superestrutura/ponte do Panamax para luzes de navegação. */
+const SHIP_SUPERSTRUCTURE_X = -90;
+const SHIP_BRIDGE_NAV_LIGHT_Y = 32;
+const SHIP_BRIDGE_NAV_LIGHT_Z = 9;
+const SHIP_MAST_NAV_LIGHT_Y = 42;
 
 // ─────────────────────────────────────────────────────────
 // 2. FUNÇÃO AUXILIAR — Luzes de Navegação
@@ -263,32 +274,10 @@ function createTugboatMesh(tugId, colorHex) {
  */
 export function buildWorld() {
 
-  // ── A. Oceano (shader Water — ondas animadas + reflexo) ─
+  // ── A. Oceano (shader procedural — ondas reativas a vento/corrente) ─
 
-  // Pré-cria o nevoeiro (densidade 0) para que o shader do Water compile o
-  // caminho de fog desde o arranque; o slider de meteorologia só ajusta a densidade.
-  if (!g.scene.fog) g.scene.fog = new THREE.FogExp2(0x1e293b, 0);
+  g.scene.add(createOcean());
 
-  const waterNormals = new THREE.TextureLoader().load('textures/waternormals.jpg', (tex) => {
-    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  });
-
-  const water = new Water(
-    new THREE.PlaneGeometry(2000, 2000),
-    {
-      textureWidth:  512,
-      textureHeight: 512,
-      waterNormals,
-      sunDirection:   new THREE.Vector3(200, 300, 100).normalize(), // alinhado à luz direcional
-      sunColor:       0xffffff,
-      waterColor:     0x0a4a63,  // azul-esverdeado de porto em dia claro
-      distortionScale: 3.0,
-      fog: true,
-    }
-  );
-  water.rotation.x = -Math.PI / 2;
-  g.scene.add(water);
-  g.water = water; // animado no loop principal (uniform 'time')
 
   // ── B. Cais de Betão ─────────────────────────────────
 
@@ -426,21 +415,21 @@ export function buildWorld() {
 
   // E.3 Cabeços de Amarração — BB (cais) e BE (mar)
   const mooringPositions = [
-    // ── Bombordo (BB) — Costado do Cais (z = -14) ──────
-    { id: 'bow-head',        xPos:  105, zPos: -14, type: 'mooring' }, // Lançante Proa BB
-    { id: 'bow-spring',      xPos:   80, zPos: -14, type: 'mooring' }, // Espringue Proa BB
-    { id: 'stern-spring',    xPos:  -80, zPos: -14, type: 'mooring' }, // Espringue Popa BB
-    { id: 'stern-head',      xPos: -105, zPos: -14, type: 'mooring' }, // Lançante Popa BB
-    // ── Boreste (BE) — Costado do Mar (z = +14) ─────────
-    { id: 'bow-head-be',     xPos:  105, zPos: +14, type: 'bollard' }, // Lançante Proa BE
-    { id: 'bow-spring-be',   xPos:   80, zPos: +14, type: 'bollard' }, // Espringue Proa BE
-    { id: 'stern-spring-be', xPos:  -80, zPos: +14, type: 'bollard' }, // Espringue Popa BE
-    { id: 'stern-head-be',   xPos: -105, zPos: +14, type: 'bollard' }, // Lançante Popa BE
+    // ── Bombordo (BB) — Costado do Cais ──────
+    { id: 'bow-head',        xPos:  105, yPos: SHIP_BOW_SIDE_BOLLARD_Y, zPos: -SHIP_BOW_SIDE_BOLLARD_Z, type: 'mooring' }, // Lançante Proa BB
+    { id: 'bow-spring',      xPos:   80, yPos: SHIP_OUTBOARD_SIDE_BOLLARD_Y, zPos: -SHIP_OUTBOARD_SIDE_BOLLARD_Z, type: 'mooring' }, // Espringue Proa BB
+    { id: 'stern-spring',    xPos:  -80, yPos: SHIP_OUTBOARD_SIDE_BOLLARD_Y, zPos: -SHIP_OUTBOARD_SIDE_BOLLARD_Z, type: 'mooring' }, // Espringue Popa BB
+    { id: 'stern-head',      xPos: -105, yPos: SHIP_OUTBOARD_SIDE_BOLLARD_Y, zPos: -SHIP_OUTBOARD_SIDE_BOLLARD_Z, type: 'mooring' }, // Lançante Popa BB
+    // ── Boreste (BE) — Costado do Mar ─────────
+    { id: 'bow-head-be',     xPos:  105, yPos: SHIP_BOW_SIDE_BOLLARD_Y, zPos: +SHIP_BOW_SIDE_BOLLARD_Z, type: 'bollard' }, // Lançante Proa BE
+    { id: 'bow-spring-be',   xPos:   80, yPos: SHIP_OUTBOARD_SIDE_BOLLARD_Y, zPos: +SHIP_OUTBOARD_SIDE_BOLLARD_Z, type: 'bollard' }, // Espringue Proa BE
+    { id: 'stern-spring-be', xPos:  -80, yPos: SHIP_OUTBOARD_SIDE_BOLLARD_Y, zPos: +SHIP_OUTBOARD_SIDE_BOLLARD_Z, type: 'bollard' }, // Espringue Popa BE
+    { id: 'stern-head-be',   xPos: -105, yPos: SHIP_OUTBOARD_SIDE_BOLLARD_Y, zPos: +SHIP_OUTBOARD_SIDE_BOLLARD_Z, type: 'bollard' }, // Lançante Popa BE
   ];
 
   mooringPositions.forEach(m => {
     const b = new THREE.Mesh(BOLLARD_GEO, BOLLARD_MAT);
-    b.position.set(m.xPos, 14 + 0.75, m.zPos);
+    b.position.set(m.xPos, m.yPos, m.zPos);
     b.castShadow = true;
     b.userData = { isDynamic: true };
     g.merchantShip.add(b);
@@ -460,24 +449,24 @@ export function buildWorld() {
   [
     { x: -110, label: 'popa' },  // Popa: dentro do casco (±112.5 m)
     { x:  105, label: 'proa' },  // Proa
-  ].forEach(({ x }) => {
+  ].forEach(({ x, label }) => {
     const b = new THREE.Mesh(BOLLARD_GEO, BOLLARD_MAT);
     b.position.set(x, 14 + 0.75, 0);
     b.castShadow = true;
-    b.userData = { isDynamic: true };
+    b.userData = { isDynamic: true, towTarget: label };
     g.merchantShip.add(b);
 
     const bHit = new THREE.Mesh(HIT_GEO, HIT_MAT);
     bHit.position.copy(b.position);
-    bHit.userData = { type: 'bollard', ref: b, isDynamic: true };
+    bHit.userData = { type: 'bollard', ref: b, isDynamic: true, towTarget: label };
     g.merchantShip.add(bHit);
     g.hitboxes.push(bHit);
   });
 
   // E.5 Luzes de Navegação do Panamax
-  createNavLight(g.merchantShip, 0xff0000, -85, 20, -16.5, 400); // BB
-  createNavLight(g.merchantShip, 0x00ff00, -85, 20,  16.5, 400); // BE
-  createNavLight(g.merchantShip, 0xffffff, -70, 26,     0, 800); // Mastro
+  createNavLight(g.merchantShip, 0xff0000, SHIP_SUPERSTRUCTURE_X, SHIP_BRIDGE_NAV_LIGHT_Y, -SHIP_BRIDGE_NAV_LIGHT_Z, 400); // BB
+  createNavLight(g.merchantShip, 0x00ff00, SHIP_SUPERSTRUCTURE_X, SHIP_BRIDGE_NAV_LIGHT_Y, SHIP_BRIDGE_NAV_LIGHT_Z, 400); // BE
+  createNavLight(g.merchantShip, 0xffffff, SHIP_SUPERSTRUCTURE_X, SHIP_MAST_NAV_LIGHT_Y, 0, 800); // Mastro
   createNavLight(g.merchantShip, 0xffffff, -112.5, 10,  0, 400); // Popa
 
   // Posiciona navio de acordo com o estado físico inicial

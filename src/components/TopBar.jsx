@@ -205,15 +205,13 @@ export default function TopBar() {
 // ── Sub-Componentes (Extraídos do HTML Velho) ────────────────────
 
 function ShipCommandPanel() {
-  const [engine, setEngine] = useState(0);
-  const [rudder, setRudder] = useState(0);
+  const [engine, setEngine] = useState(shipState.engineThrust);
+  const [rudder, setRudder] = useState(shipState.rudderAngle);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (g.ship?.command) {
-        if (g.ship.command.engine !== engine) setEngine(g.ship.command.engine);
-        if (g.ship.command.rudder !== rudder) setRudder(g.ship.command.rudder);
-      }
+      if (shipState.engineThrust !== engine) setEngine(shipState.engineThrust);
+      if (shipState.rudderAngle !== rudder) setRudder(shipState.rudderAngle);
     }, 200);
     return () => clearInterval(interval);
   }, [engine, rudder]);
@@ -221,13 +219,13 @@ function ShipCommandPanel() {
   const updateEngine = (val) => {
     const v = parseInt(val, 10);
     setEngine(v);
-    if(g.ship?.command) g.ship.command.engine = v;
+    shipState.engineThrust = v;
   };
 
   const updateRudder = (val) => {
     const v = parseInt(val, 10);
     setRudder(v);
-    if(g.ship?.command) g.ship.command.rudder = v;
+    shipState.rudderAngle = v;
   };
 
   return (

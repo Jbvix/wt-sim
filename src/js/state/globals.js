@@ -29,10 +29,10 @@ export const g = {
   ambientLight:  null,
 
   // Meshes da cena
+  ocean:          null,
   merchantShip:    null,
   windsockFabric:  null,
   pier:            null,
-  water:           null,  /** @type {Water} Oceano com shader (uniform 'time' animado) */
 
   // Ponteiros do rebocador ATIVO (atualizados por switchTug)
   tugboat:         null,

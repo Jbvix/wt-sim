@@ -1,5 +1,5 @@
 import fs from 'fs';
-import * as acorn from 'file:///C:/Users/jossi/AppData/Roaming/npm/node_modules/acorn/dist/acorn.mjs';
+import * as acorn from 'acorn';
 
 const html = fs.readFileSync('winchsim.html', 'utf8');
 const scriptMatch = html.match(/<script type="module">([\s\S]*?)<\/script>/);

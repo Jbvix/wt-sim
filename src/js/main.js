@@ -10,16 +10,18 @@
 import * as THREE from 'three';
 
 // ── Módulos internos ──────────────────────────────────────
-import { g, shipState, mooringLines, raycaster, mouse, pointerDownPos } from './state/globals.js';
+import { g, shipState, mooringLines, raycaster, mouse, pointerDownPos, devConfig } from './state/globals.js';
 import { tugs }                from './fleet/tugData.js';
 import { switchTug, setupFleetManager } from './fleet/fleetManager.js';
 import { setupGraphics, onWindowResize } from './graphics/scene.js';
 import { loadAllAssets }       from './graphics/assets.js';
 import { buildWorld }          from './graphics/models.js';
+import { updateOcean }         from './graphics/water.js';
 import { updatePhysics }       from './physics/tugKinetics.js';
 import { setupJoysticks }      from './ui/joysticks.js';
 import { setupWinchPanel }     from './ui/winchPanel.js';
 import { setupShipPanel }      from './ui/shipPanel.js';
+import { getTowBollardPrompt, isTowBollardForTug } from './ui/towPrompt.js';
 import {
   setupEnvironmentPanel,
   animateWindsock,
@@ -409,6 +411,7 @@ function animate(timestamp) {
 
     if (dt > 0 && dt < 1) {
       updatePhysics(dt);
+      updateOcean(dt);
     }
 
     // ── Renderização dos Cabos dos Rebocadores (Bézier) ──
@@ -653,10 +656,12 @@ function handleInteraction(userData) {
 
     g.ropeState.status = 1;
     g.ropeLine.visible = true;
+    msgEl.innerText = getTowBollardPrompt(userData.tugId);
+    msgEl.style.background = 'rgba(234, 179, 8, 0.9)';
     msgEl.style.display = 'block';
 
   // ── Estado 1: Liga ao Cabeço ──────────────────────────
-  } else if (g.ropeState?.status === 1 && userData.type === 'bollard') {
+  } else if (g.ropeState?.status === 1 && isTowBollardForTug(userData, g.activeTugId)) {
     g.ropeState.status           = 2;
     g.ropeState.connectedBollard = userData.ref;
     msgEl.style.display          = 'none';
@@ -668,6 +673,11 @@ function handleInteraction(userData) {
     const bPos = new THREE.Vector3();
     userData.ref.getWorldPosition(bPos);
     g.ropeState.lengthL0 = wPos.distanceTo(bPos);
+
+  } else if (g.ropeState?.status === 1 && userData.type === 'bollard') {
+    msgEl.innerText        = getTowBollardPrompt(g.activeTugId);
+    msgEl.style.display    = 'block';
+    msgEl.style.background = 'rgba(234, 179, 8, 0.9)';
 
   // ── Estado 2: Desconectar clicando no cabeço ligado ───
   } else if (g.ropeState?.status === 2 && userData.type === 'bollard'

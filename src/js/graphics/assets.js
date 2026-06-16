@@ -9,6 +9,7 @@
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
 // Cache global de modelos carregados
 export const modelsCache = {
@@ -50,8 +51,16 @@ export function loadAllAssets() {
       reject(new Error(`Falha no download via GLTFLoader: ${url}`));
     };
 
-    // 2. Instanciamos o loader
+    // 2. Instanciamos o loader com suporte a Draco (geometria comprimida).
+    //    Os GLB foram otimizados com KHR_draco_mesh_compression + EXT_texture_webp
+    //    (~93MB → ~6.7MB). O WebP é descodificado nativamente pelo browser; o
+    //    Draco requer este decoder WASM self-hosted em /public/draco/.
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('draco/');
+    dracoLoader.setDecoderConfig({ type: 'wasm' });
+
     const loader = new GLTFLoader(manager);
+    loader.setDRACOLoader(dracoLoader);
 
     // 3. Encomendamos o Navio
     loader.load(

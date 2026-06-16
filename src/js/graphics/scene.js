@@ -38,10 +38,16 @@ export function setupGraphics() {
     antialias: true,
     logarithmicDepthBuffer: true,
   });
-  g.renderer.setPixelRatio(window.devicePixelRatio || 1);
+  // Teto de pixelRatio em 2 — evita renderizar 9× os pixels em ecrãs Retina/mobile (DPR 3)
+  g.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   g.renderer.setSize(window.innerWidth, window.innerHeight);
   g.renderer.shadowMap.enabled = true;
   g.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Sombras suaves
+
+  // Tone mapping fílmico — converte o HDR linear dos materiais PBR (GLB) numa
+  // imagem com contraste cinematográfico, eliminando o aspeto "lavado"/plano.
+  g.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  g.renderer.toneMappingExposure = 1.1;
   document.getElementById('canvas-container').appendChild(g.renderer.domElement);
 
   // ── Iluminação ────────────────────────────────────────
@@ -88,4 +94,8 @@ export function onWindowResize() {
   g.camera.aspect = window.innerWidth / window.innerHeight;
   g.camera.updateProjectionMatrix();
   g.renderer.setSize(window.innerWidth, window.innerHeight);
+
+  // Os cabos fat-line (Line2) precisam da resolução atual do ecrã para
+  // calcular a espessura correta em píxeis/mundo.
+  g.lineMaterials.forEach(m => m.resolution.set(window.innerWidth, window.innerHeight));
 }

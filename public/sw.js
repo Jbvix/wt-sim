@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wtsim-cache-v2';
+const CACHE_NAME = 'wtsim-cache-v3'; // v3: GLB otimizados (Draco + WebP, ~93MB → ~6.7MB)
 
 // Ficheiros estáticos mínimos para o arranque rápido
 const PRECACHE_ASSETS = [

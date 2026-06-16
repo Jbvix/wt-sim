@@ -518,6 +518,9 @@ function animate(timestamp) {
     animateWindsock();
     animateCurrentCompass();
 
+    // Ondulação do oceano (velocidade constante, independente do FPS)
+    if (g.water) g.water.material.uniforms['time'].value += 1.0 / 60.0;
+
     // ── Render ────────────────────────────────────────────
     g.controls?.update();
     g.renderer.render(g.scene, g.camera);

@@ -32,6 +32,7 @@ export const g = {
   merchantShip:    null,
   windsockFabric:  null,
   pier:            null,
+  water:           null,  /** @type {Water} Oceano com shader (uniform 'time' animado) */
 
   // Ponteiros do rebocador ATIVO (atualizados por switchTug)
   tugboat:         null,

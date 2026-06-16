@@ -9,6 +9,7 @@
  */
 
 import * as THREE from 'three';
+import { Water }         from 'three/addons/objects/Water.js';
 import { Line2 }         from 'three/addons/lines/Line2.js';
 import { LineGeometry }  from 'three/addons/lines/LineGeometry.js';
 import { LineMaterial }  from 'three/addons/lines/LineMaterial.js';
@@ -262,15 +263,32 @@ function createTugboatMesh(tugId, colorHex) {
  */
 export function buildWorld() {
 
-  // ── A. Oceano ─────────────────────────────────────────
+  // ── A. Oceano (shader Water — ondas animadas + reflexo) ─
 
-  const ocean = new THREE.Mesh(
-    new THREE.PlaneGeometry(1000, 1000),
-    new THREE.MeshStandardMaterial({ color: 0x006994, roughness: 0.1, metalness: 0.1 })
+  // Pré-cria o nevoeiro (densidade 0) para que o shader do Water compile o
+  // caminho de fog desde o arranque; o slider de meteorologia só ajusta a densidade.
+  if (!g.scene.fog) g.scene.fog = new THREE.FogExp2(0x1e293b, 0);
+
+  const waterNormals = new THREE.TextureLoader().load('textures/waternormals.jpg', (tex) => {
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  });
+
+  const water = new Water(
+    new THREE.PlaneGeometry(2000, 2000),
+    {
+      textureWidth:  512,
+      textureHeight: 512,
+      waterNormals,
+      sunDirection:   new THREE.Vector3(200, 300, 100).normalize(), // alinhado à luz direcional
+      sunColor:       0xffffff,
+      waterColor:     0x0a4a63,  // azul-esverdeado de porto em dia claro
+      distortionScale: 3.0,
+      fog: true,
+    }
   );
-  ocean.rotation.x = -Math.PI / 2;
-  ocean.receiveShadow = true;
-  g.scene.add(ocean);
+  water.rotation.x = -Math.PI / 2;
+  g.scene.add(water);
+  g.water = water; // animado no loop principal (uniform 'time')
 
   // ── B. Cais de Betão ─────────────────────────────────
 

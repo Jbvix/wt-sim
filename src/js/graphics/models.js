@@ -9,10 +9,53 @@
  */
 
 import * as THREE from 'three';
+import { Line2 }         from 'three/addons/lines/Line2.js';
+import { LineGeometry }  from 'three/addons/lines/LineGeometry.js';
+import { LineMaterial }  from 'three/addons/lines/LineMaterial.js';
 import { g, shipState, mooringLines } from '../state/globals.js';
 import { tugs } from '../fleet/tugData.js';
 import { createBuoys } from './buoys.js';
 import { modelsCache } from './assets.js';
+
+// ─────────────────────────────────────────────────────────
+// 0. FÁBRICA DE CABOS COM ESPESSURA (Line2 / fat lines)
+// ─────────────────────────────────────────────────────────
+
+/**
+ * Cria um cabo renderizado com espessura real (Line2), ao contrário de
+ * THREE.Line cujo `linewidth` é ignorado pelo WebGL (fica sempre 1px).
+ * A largura é definida em unidades de mundo (metros), pelo que o cabo
+ * engrossa visualmente ao aproximar a câmara.
+ *
+ * O material é registado em g.lineMaterials para que a sua `resolution`
+ * seja atualizada em cada redimensionamento da janela (onWindowResize).
+ *
+ * @param {number} colorHex   - Cor inicial do cabo
+ * @param {number} [width=0.3] - Espessura em metros (unidades de mundo)
+ * @returns {Line2}
+ */
+export function createRopeLine(colorHex, width = 0.3) {
+  const geometry = new LineGeometry();
+  // 21 pontos iniciais a zero (preenchidos a cada frame pelo loop de animação)
+  geometry.setPositions(new Array(21 * 3).fill(0));
+
+  const material = new LineMaterial({
+    color: colorHex,
+    linewidth: width,
+    worldUnits: true,
+    dashed: false,
+  });
+  material.resolution.set(window.innerWidth, window.innerHeight);
+  g.lineMaterials.push(material);
+
+  const line = new Line2(geometry, material);
+  line.computeLineDistances();
+  // A geometria é reescrita a cada frame (catenária Bézier); desligar o frustum
+  // culling impede que o cabo desapareça por bounding-sphere desatualizada.
+  line.frustumCulled = false;
+  line.visible = false;
+  return line;
+}
 
 // ─────────────────────────────────────────────────────────
 // 1. GEOMETRIAS PARTILHADAS (definidas uma vez, reutilizadas)
@@ -20,11 +63,12 @@ import { modelsCache } from './assets.js';
 
 /** Geometria padrão dos cabeços de amarração (cilindro). */
 const BOLLARD_GEO = new THREE.CylinderGeometry(0.5, 0.6, 1.5, 16);
-/** Material padrão dos cabeços (Magenta Neon para destaque). */
-const BOLLARD_MAT = new THREE.MeshStandardMaterial({ 
-  color: 0xff00ff, 
-  emissive: 0xaa00aa,
-  roughness: 0.1 
+/** Material padrão dos cabeços — amarelo de segurança industrial (aço pintado),
+ *  cor padrão de cabeços portuários: visível mas realista (sem neon emissivo). */
+const BOLLARD_MAT = new THREE.MeshStandardMaterial({
+  color: 0xd4a017,
+  roughness: 0.55,
+  metalness: 0.4,
 });
 /** Material das hitboxes (invisível ao render). */
 const HIT_MAT = new THREE.MeshBasicMaterial({ visible: false });
@@ -141,16 +185,16 @@ function createTugboatMesh(tugId, colorHex) {
   // ── Guincho de Proa ────────────────────────────────────
   const winchBase = new THREE.Mesh(
     new THREE.BoxGeometry(3, 1.5, 4),
-    new THREE.MeshStandardMaterial({ color: 0x00ff00, emissive: 0x00aa00 }) // Verde Neon
+    new THREE.MeshStandardMaterial({ color: 0x3a3f44, roughness: 0.6, metalness: 0.7 }) // Aço industrial escuro
   );
   winchBase.position.set(12, 6 + 0.75, 0);
   winchBase.castShadow = true;
   group.add(winchBase);
 
-  // Tambor do Guincho
+  // Tambor do Guincho — amarelo de segurança (visível para interação)
   const drum = new THREE.Mesh(
     new THREE.CylinderGeometry(0.8, 0.8, 3, 16),
-    new THREE.MeshStandardMaterial({ color: 0x00ff00, emissive: 0x00aa00 })
+    new THREE.MeshStandardMaterial({ color: 0xd4a017, roughness: 0.5, metalness: 0.5 })
   );
   drum.rotation.x = Math.PI / 2;
   drum.position.set(12, 6 + 1.9, 0);
@@ -196,11 +240,8 @@ function createTugboatMesh(tugId, colorHex) {
   group.add(resArrow);
   meshes.resultantArrow = resArrow;
 
-  // ── Cabo HMPE (Curva Bézier dinâmica) ──────────────────
-  const ropePoints = Array.from({ length: 21 }, () => new THREE.Vector3());
-  const ropeGeo = new THREE.BufferGeometry().setFromPoints(ropePoints);
-  const ropeL   = new THREE.Line(ropeGeo, new THREE.LineBasicMaterial({ color: 0xffff00, linewidth: 2 }));
-  ropeL.visible  = false;
+  // ── Cabo HMPE (Curva Bézier dinâmica, espessura real) ──
+  const ropeL = createRopeLine(0xffff00, 0.35); // hawser de reboque ~0.35 m
   g.scene.add(ropeL);
   meshes.ropeLine = ropeL;
 
@@ -434,10 +475,7 @@ export function buildWorld() {
   // ── G. Malhas das Espias de Amarração ─────────────────
 
   mooringLines.forEach(line => {
-    const points = Array.from({ length: 21 }, () => new THREE.Vector3());
-    const geo    = new THREE.BufferGeometry().setFromPoints(points);
-    line.ropeLine = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: line.color, linewidth: 2 }));
-    line.ropeLine.visible = false;
+    line.ropeLine = createRopeLine(line.color, 0.22); // espia de amarração ~0.22 m
     g.scene.add(line.ropeLine);
   });
 

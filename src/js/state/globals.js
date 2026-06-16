@@ -50,6 +50,7 @@ export const g = {
   navLights:     [],  /** @type {THREE.PointLight[]} Luzes de navegação */
   pierBollards:  [],  /** @type {Array<{x:number, ref:THREE.Mesh}>} Cabeços do cais */
   buoys:         [],  /** @type {Array<{id,position,pivot,mesh,radius}>} Boias náuticas */
+  lineMaterials: [],  /** @type {LineMaterial[]} Materiais de cabos fat-line (resolution no resize) */
 
   // Controle da frota
   activeTugId:    'stern',  /** @type {'stern'|'bow'} */

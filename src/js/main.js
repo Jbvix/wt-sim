@@ -395,6 +395,23 @@ function setupDockedScenario() {
 // ─────────────────────────────────────────────────────────
 
 /**
+ * Escreve uma lista de pontos Vector3 numa geometria de cabo fat-line (Line2).
+ * Usa setPositions (API estável de LineGeometry) com um array plano [x,y,z,...].
+ *
+ * @param {Line2}            ropeLine - O cabo a atualizar
+ * @param {THREE.Vector3[]}  pts      - Pontos da curva (Bézier)
+ */
+function setRopePoints(ropeLine, pts) {
+  const flat = new Array(pts.length * 3);
+  for (let i = 0; i < pts.length; i++) {
+    flat[i * 3]     = pts[i].x;
+    flat[i * 3 + 1] = pts[i].y;
+    flat[i * 3 + 2] = pts[i].z;
+  }
+  ropeLine.geometry.setPositions(flat);
+}
+
+/**
  * Loop principal — chamado pelo browser via requestAnimationFrame.
  * Executa física, atualiza cabos e renderiza a cena.
  *
@@ -444,7 +461,7 @@ function animate(timestamp) {
         const curve = new THREE.QuadraticBezierCurve3(startPos, ctrl, endPos);
 
         const pts = curve.getPoints(20);
-        tMeshes.ropeLine.geometry.setFromPoints(pts);
+        setRopePoints(tMeshes.ropeLine, pts);
 
         // Feedback de Tensão (Cores Rígidas)
         if (tRope.tension > 150) {
@@ -484,7 +501,7 @@ function animate(timestamp) {
       const ctrl = new THREE.Vector3(half.x, Math.min(startPos.y, endPos.y) - sag, half.z);
       const pts  = new THREE.QuadraticBezierCurve3(startPos, ctrl, endPos).getPoints(20);
 
-      line.ropeLine.geometry.setFromPoints(pts);
+      setRopePoints(line.ropeLine, pts);
       
       if (line.tension > 250) {
         line.ropeLine.material.color.setHex(0xff0000); // Perigo, muito tesa

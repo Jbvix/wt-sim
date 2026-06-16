@@ -71,7 +71,9 @@ export default function TopBar() {
     currentMag: 0,
     currentDir: 0,
     tugSpeed: 0,
-    shipSpeed: 0
+    shipSpeed: 0,
+    surge: 0, // velocidade longitudinal (kn): + avante, − a ré
+    rot: 0    // taxa de giro (°/min): + boreste (BE), − bombordo (BB)
   });
 
   // Polling Real-Time
@@ -104,8 +106,19 @@ export default function TopBar() {
       }
 
       let newShipSpeed = 0;
+      let newSurge = 0;
+      let newRot = 0;
       if (shipState?.velocity) {
         newShipSpeed = Math.hypot(shipState.velocity.x, shipState.velocity.y) * 1.94384;
+
+        // Surge = componente longitudinal da velocidade (proa = (cos h, sin h)).
+        // > 0 → avante (verde) · < 0 → a ré (vermelho).
+        const h = shipState.heading || 0;
+        newSurge = (shipState.velocity.x * Math.cos(h) + shipState.velocity.y * Math.sin(h)) * 1.94384;
+
+        // Taxa de giro: angularVelocity > 0 → proa cai a boreste (BE);
+        // < 0 → a bombordo (BB). Convertida para °/min.
+        newRot = (shipState.angularVelocity || 0) * (180 / Math.PI) * 60;
       }
 
       setTelemetry({
@@ -114,11 +127,28 @@ export default function TopBar() {
         currentMag: envState?.currentMag || 0,
         currentDir: envState?.currentDir || 0,
         tugSpeed: newTugSpeed,
-        shipSpeed: newShipSpeed
+        shipSpeed: newShipSpeed,
+        surge: newSurge,
+        rot: newRot
       });
     }, 100);
     return () => clearInterval(interval);
   }, []);
+
+  // ── Indicadores direcionais (cores: verde = boreste/avante, vermelho = bombordo/ré) ──
+  const SURGE_THR = 0.05; // kn — zona morta para não piscar perto de zero
+  const ROT_THR = 1;      // °/min
+  const avante = telemetry.surge > SURGE_THR;
+  const re = telemetry.surge < -SURGE_THR;
+  const surgeColor = avante ? 'text-emerald-400' : re ? 'text-red-400' : 'text-slate-400';
+  const surgeArrow = avante ? '▲' : re ? '▼' : '•';
+  const surgeTag = avante ? 'AVANTE' : re ? 'A RÉ' : 'PARADO';
+
+  const boreste = telemetry.rot > ROT_THR;
+  const bombordo = telemetry.rot < -ROT_THR;
+  const giroColor = boreste ? 'text-emerald-400' : bombordo ? 'text-red-400' : 'text-slate-400';
+  const giroGlyph = boreste ? '↻' : bombordo ? '↺' : '•';
+  const giroTag = boreste ? 'BE' : bombordo ? 'BB' : '—';
 
   return (
     <div className="fixed top-0 left-0 w-full p-4 flex flex-col md:flex-row items-start md:items-center justify-between pointer-events-none z-50 gap-4">
@@ -162,12 +192,28 @@ export default function TopBar() {
 
         <div className="w-px h-6 md:h-8 bg-white/10"></div>
 
-        {/* Vel Navio */}
+        {/* Vel Navio — longitudinal (avante verde / a ré vermelho) */}
         <div className="flex flex-col items-center min-w-[70px] md:min-w-[80px]">
-          <div className="flex items-center gap-1.5 text-amber-400 font-mono text-base md:text-lg font-bold">
-            {telemetry.shipSpeed.toFixed(1)} <span className="text-xs">kn</span>
+          <div className={cn("flex items-center gap-1 font-mono text-base md:text-lg font-bold", surgeColor)}>
+            <span className="text-sm">{surgeArrow}</span>
+            {Math.abs(telemetry.surge).toFixed(1)} <span className="text-xs">kn</span>
           </div>
-          <span className="text-[0.6rem] md:text-[0.65rem] text-slate-400 uppercase tracking-widest font-semibold mt-0.5">Vel NAVIO</span>
+          <span className="text-[0.6rem] md:text-[0.65rem] text-slate-400 uppercase tracking-widest font-semibold mt-0.5">
+            Vel NAVIO <span className={cn("font-bold", surgeColor)}>{surgeTag}</span>
+          </span>
+        </div>
+
+        <div className="w-px h-6 md:h-8 bg-white/10"></div>
+
+        {/* Giro — taxa de evolução (boreste verde / bombordo vermelho) */}
+        <div className="flex flex-col items-center min-w-[70px] md:min-w-[80px]">
+          <div className={cn("flex items-center gap-1 font-mono text-base md:text-lg font-bold", giroColor)}>
+            <span className="text-lg leading-none">{giroGlyph}</span>
+            {Math.abs(telemetry.rot).toFixed(0)} <span className="text-xs">°/min</span>
+          </div>
+          <span className="text-[0.6rem] md:text-[0.65rem] text-slate-400 uppercase tracking-widest font-semibold mt-0.5">
+            Giro <span className={cn("font-bold", giroColor)}>{giroTag}</span>
+          </span>
         </div>
 
         {/* Separador */}

@@ -283,6 +283,89 @@ function initPhysicsDevTools() {
   });
 }
 
+// ── Dev Tool Temporária — Posicionamento das Luzes de Navegação ──
+/**
+ * Painel auxiliar para posicionar o conjunto de 3 luzes de navegação do navio
+ * (BB vermelho, BE verde, Mastro branco) em tempo real. Os sliders movem o
+ * cluster e a caixa de saída imprime os valores prontos a colar nas constantes
+ * SHIP_SUPERSTRUCTURE_X / SHIP_BRIDGE_NAV_LIGHT_Y / _Z / SHIP_MAST_NAV_LIGHT_Y.
+ */
+function initShipNavLightDevTools() {
+  const panel = document.getElementById('dev-navlights-panel');
+  if (!panel) return;
+
+  // Localiza as 3 luzes do navio em g.navLights (descendentes de g.merchantShip).
+  // hexColor pode vir sem zeros à esquerda (ex.: 0x00ff00 → "ff00"), por isso
+  // comparamos o valor numérico via parseInt.
+  const belongsToShip = (l) => {
+    let p = l.parent;
+    while (p) { if (p === g.merchantShip) return true; p = p.parent; }
+    return false;
+  };
+  const colorOf = (l) => parseInt(l.userData.hexColor, 16);
+  const shipLights = g.navLights.filter(belongsToShip);
+  const bb   = shipLights.find(l => colorOf(l) === 0xff0000);
+  const be   = shipLights.find(l => colorOf(l) === 0x00ff00);
+  const mast = shipLights
+    .filter(l => colorOf(l) === 0xffffff)
+    .sort((a, b) => b.position.y - a.position.y)[0]; // branco mais alto = mastro
+
+  if (!bb || !be || !mast) {
+    document.getElementById('nl-output').innerText = 'Luzes do navio não encontradas.';
+    return;
+  }
+
+  const rangeX  = document.getElementById('nl-range-x');
+  const rangeYb = document.getElementById('nl-range-yb');
+  const rangeZ  = document.getElementById('nl-range-z');
+  const rangeYm = document.getElementById('nl-range-ym');
+  const valX  = document.getElementById('nl-val-x');
+  const valYb = document.getElementById('nl-val-yb');
+  const valZ  = document.getElementById('nl-val-z');
+  const valYm = document.getElementById('nl-val-ym');
+  const out   = document.getElementById('nl-output');
+
+  // Inicializa os sliders com a posição atual das luzes
+  rangeX.value  = bb.position.x;
+  rangeYb.value = bb.position.y;
+  rangeZ.value  = Math.abs(be.position.z);
+  rangeYm.value = mast.position.y;
+
+  function apply() {
+    const X  = parseFloat(rangeX.value);
+    const Yb = parseFloat(rangeYb.value);
+    const Z  = parseFloat(rangeZ.value);
+    const Ym = parseFloat(rangeYm.value);
+
+    bb.position.set(X, Yb, -Z);
+    be.position.set(X, Yb,  Z);
+    mast.position.set(X, Ym, 0);
+
+    valX.innerText = X;  valYb.innerText = Yb;
+    valZ.innerText = Z;  valYm.innerText = Ym;
+
+    out.innerText =
+      `const SHIP_SUPERSTRUCTURE_X = ${X};\n` +
+      `const SHIP_BRIDGE_NAV_LIGHT_Y = ${Yb};\n` +
+      `const SHIP_BRIDGE_NAV_LIGHT_Z = ${Z};\n` +
+      `const SHIP_MAST_NAV_LIGHT_Y = ${Ym};`;
+  }
+
+  [rangeX, rangeYb, rangeZ, rangeYm].forEach(r => r.addEventListener('input', apply));
+
+  // Minimizar / restaurar
+  const btnMin  = document.getElementById('dev-navlights-min');
+  const content = document.getElementById('dev-navlights-content');
+  btnMin?.addEventListener('click', () => {
+    const hidden = content.style.display === 'none';
+    content.style.display = hidden ? 'block' : 'none';
+    btnMin.innerText = hidden ? '[ - ]' : '[ + ]';
+  });
+
+  makeDraggable('dev-navlights-panel', 'dev-navlights-handle');
+  apply();
+}
+
 // ─────────────────────────────────────────────────────────
 // 1. INICIALIZAÇÃO
 // ─────────────────────────────────────────────────────────
@@ -327,7 +410,10 @@ async function init() {
   // Painel de Físicas
   initPhysicsDevTools();
 
-  // 3. Aguarda clique do utilizador para iniciar a Física e Renderização 
+  // Painel de Luzes de Navegação (posicionamento temporário)
+  initShipNavLightDevTools();
+
+  // 3. Aguarda clique do utilizador para iniciar a Física e Renderização
   window.startSimulation = function () {
     console.log('DEBUG: START SIMULATION clicado. Loop iniciado.');
     

@@ -293,6 +293,40 @@
 
 
   <!-- ═══════════════════════════════════════════════════
+       PAINEL DE LUZES DE NAVEGAÇÃO (DEV TOOL TEMPORÁRIA)
+       Posiciona o conjunto de 3 luzes do navio (BB/BE/Mastro).
+       ═══════════════════════════════════════════════════ -->
+  <div id="dev-navlights-panel" class="panel" style="position: absolute; top: 90px; right: 10px; z-index: 9999; width: 290px; font-size: 0.8rem; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+    <div id="dev-navlights-handle" style="background: rgba(234, 179, 8, 0.2); padding: 8px; margin: -10px -10px 10px -10px; border-bottom: 1px solid #eab308; font-weight: bold; color: #eab308; cursor: move; display: flex; justify-content: space-between;">
+      <span>🔆 Luzes de Navegação (Navio)</span>
+      <button id="dev-navlights-min" style="background: none; border: none; color: #eab308; cursor: pointer; font-weight: bold;">[ - ]</button>
+    </div>
+
+    <div id="dev-navlights-content">
+      <p style="margin: 0 0 8px 0; opacity: 0.7;">🔴 BB / 🟢 BE nas asas da ponte · ⚪ Mastro acima.</p>
+
+      <div style="margin-bottom: 10px;">
+        <label>X Passadiço (vante/ré): <span id="nl-val-x">41</span></label>
+        <input type="range" id="nl-range-x" min="-120" max="120" step="0.5" value="41" style="width: 100%;">
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label>Y Ponte (altura BB/BE): <span id="nl-val-yb">34</span></label>
+        <input type="range" id="nl-range-yb" min="0" max="50" step="0.5" value="34" style="width: 100%;">
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label>Z Lateral (± boca BB/BE): <span id="nl-val-z">11</span></label>
+        <input type="range" id="nl-range-z" min="0" max="25" step="0.5" value="11" style="width: 100%;">
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label>Y Mastro (altura ⚪): <span id="nl-val-ym">41</span></label>
+        <input type="range" id="nl-range-ym" min="0" max="55" step="0.5" value="41" style="width: 100%;">
+      </div>
+
+      <div style="background: rgba(0,0,0,0.8); padding: 6px; border-left: 3px solid #eab308; font-family: monospace; white-space: pre; font-size: 0.72rem;" id="nl-output">A inicializar…</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
        PONTO DE ENTRADA JS (ES Module)
 
        ═══════════════════════════════════════════════════ -->

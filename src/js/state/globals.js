@@ -29,6 +29,7 @@ export const g = {
   ambientLight:  null,
 
   // Meshes da cena
+  ocean:          null,
   merchantShip:    null,
   windsockFabric:  null,
   pier:            null,

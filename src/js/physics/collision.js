@@ -10,6 +10,7 @@
 
 import { g, shipState } from '../state/globals.js';
 import { tugs } from '../fleet/tugData.js';
+import { getTowBollardPrompt } from '../ui/towPrompt.js';
 
 // ─────────────────────────────────────────────────────────
 // 1. FEEDBACK VISUAL DE COLISÃO
@@ -34,6 +35,9 @@ export function showCrashWarning(msg) {
   crashTimeout = setTimeout(() => {
     if (g.ropeState?.status === 2) {
       msgEl.style.display = 'none';
+    } else if (g.ropeState?.status === 1) {
+      msgEl.style.background = 'rgba(234, 179, 8, 0.9)';
+      msgEl.innerText        = getTowBollardPrompt(g.activeTugId);
     } else {
       msgEl.style.background = 'rgba(234, 179, 8, 0.9)';
       msgEl.innerText        = 'Selecione o Cabeço no Cais';

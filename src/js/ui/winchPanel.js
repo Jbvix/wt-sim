@@ -9,6 +9,7 @@
  */
 
 import { g } from '../state/globals.js';
+import { getTowBollardPrompt } from './towPrompt.js';
 
 // ─────────────────────────────────────────────────────────
 // 1. SETUP DO PAINEL DO GUINCHO
@@ -105,7 +106,9 @@ export function setupWinchPanel() {
       setTimeout(() => {
         if (g.ropeState.status === 2) msgEl.style.display = 'none';
         msgEl.style.background = 'rgba(234, 179, 8, 0.9)';
-        msgEl.innerText        = 'Selecione o Cabeço no Cais';
+        msgEl.innerText        = g.ropeState.status === 1
+          ? getTowBollardPrompt(g.activeTugId)
+          : 'Selecione o Cabeço no Cais';
       }, 3000);
 
     } else {

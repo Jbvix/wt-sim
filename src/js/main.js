@@ -701,45 +701,22 @@ function handleInteraction(userData) {
              && userData.ref === g.ropeState.connectedBollard) {
     window.attemptDisconnect?.();
 
-  // ── Interação com Espias do Navio (Selecionar para ligar) ───
+  // ── Largar Espia do Navio (Desatracagem) ──────────────────
   } else if (g.ropeState?.status === 0 && userData.type === 'mooring') {
     const line = mooringLines.find(l => l.id === userData.mooringId);
-    if (line) {
+    if (line && line.active) {
+      // Desatracagem: largar a espia diretamente (cast off), sem pedir
+      // cabeço no cais. Mostra apenas uma confirmação breve.
       line.active           = false;
       line.pierRef          = null;
+      line.tension          = 0;
       line.ropeLine.visible = false;
-      g.activeMooringLineId = line.id;
+      g.activeMooringLineId  = null;
 
-      msgEl.innerText             = `${line.type.toUpperCase()} SELECIONADO!\nSelecione um cabeço no cais.`;
-      msgEl.style.display         = 'block';
-      msgEl.style.background      = 'rgba(239, 68, 68, 0.9)'; // Vermelho
-    }
-
-  // ── Ligar Espia do Navio ao Cabeço do Cais ────────────────
-  } else if (g.ropeState?.status === 0 && g.activeMooringLineId && userData.type === 'bollard' && userData.isDynamic === false) {
-    const line = mooringLines.find(l => l.id === g.activeMooringLineId);
-    if (line) {
-      line.pierRef          = userData.ref;
-      line.active           = true;
-      line.ropeLine.visible = true;
-
-      const shipWorld = new THREE.Vector3();
-      line.shipRef.getWorldPosition(shipWorld);
-      const pierWorld = new THREE.Vector3();
-      line.pierRef.getWorldPosition(pierWorld);
-      line.lengthL0 = shipWorld.distanceTo(pierWorld);
-
-      g.activeMooringLineId = null;
-
-      msgEl.innerText             = `${line.type.toUpperCase()} CONECTADO!`;
-      msgEl.style.display         = 'block';
-      msgEl.style.background      = 'rgba(16, 185, 129, 0.9)'; // Verde
-
-      setTimeout(() => {
-        if (g.ropeState?.status === 0 && !g.activeMooringLineId) msgEl.style.display = 'none';
-        msgEl.style.background = 'rgba(234, 179, 8, 0.9)';
-        msgEl.innerText        = 'Selecione o Cabeço no Cais';
-      }, 2000);
+      msgEl.innerText        = `${line.type.toUpperCase()} LARGADO`;
+      msgEl.style.background = 'rgba(16, 185, 129, 0.9)'; // Verde (confirmação)
+      msgEl.style.display    = 'block';
+      setTimeout(() => { msgEl.style.display = 'none'; }, 1500);
     }
   }
 }

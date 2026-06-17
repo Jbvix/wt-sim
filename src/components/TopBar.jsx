@@ -71,7 +71,9 @@ export default function TopBar() {
     currentMag: 0,
     currentDir: 0,
     tugSpeed: 0,
-    shipSpeed: 0
+    shipSpeed: 0,
+    surge: 0, // velocidade longitudinal (kn): + avante, − a ré
+    rot: 0    // taxa de giro (°/min): + boreste (BE), − bombordo (BB)
   });
 
   // Polling Real-Time
@@ -104,8 +106,19 @@ export default function TopBar() {
       }
 
       let newShipSpeed = 0;
+      let newSurge = 0;
+      let newRot = 0;
       if (shipState?.velocity) {
         newShipSpeed = Math.hypot(shipState.velocity.x, shipState.velocity.y) * 1.94384;
+
+        // Surge = componente longitudinal da velocidade (proa = (cos h, sin h)).
+        // > 0 → avante (verde) · < 0 → a ré (vermelho).
+        const h = shipState.heading || 0;
+        newSurge = (shipState.velocity.x * Math.cos(h) + shipState.velocity.y * Math.sin(h)) * 1.94384;
+
+        // Taxa de giro: angularVelocity > 0 → proa cai a boreste (BE);
+        // < 0 → a bombordo (BB). Convertida para °/min.
+        newRot = (shipState.angularVelocity || 0) * (180 / Math.PI) * 60;
       }
 
       setTelemetry({
@@ -114,11 +127,28 @@ export default function TopBar() {
         currentMag: envState?.currentMag || 0,
         currentDir: envState?.currentDir || 0,
         tugSpeed: newTugSpeed,
-        shipSpeed: newShipSpeed
+        shipSpeed: newShipSpeed,
+        surge: newSurge,
+        rot: newRot
       });
     }, 100);
     return () => clearInterval(interval);
   }, []);
+
+  // ── Indicadores direcionais (cores: verde = boreste/avante, vermelho = bombordo/ré) ──
+  const SURGE_THR = 0.05; // kn — zona morta para não piscar perto de zero
+  const ROT_THR = 1;      // °/min
+  const avante = telemetry.surge > SURGE_THR;
+  const re = telemetry.surge < -SURGE_THR;
+  const surgeColor = avante ? 'text-emerald-400' : re ? 'text-red-400' : 'text-slate-400';
+  const surgeArrow = avante ? '▲' : re ? '▼' : '•';
+  const surgeTag = avante ? 'AVANTE' : re ? 'A RÉ' : 'PARADO';
+
+  const boreste = telemetry.rot > ROT_THR;
+  const bombordo = telemetry.rot < -ROT_THR;
+  const giroColor = boreste ? 'text-emerald-400' : bombordo ? 'text-red-400' : 'text-slate-400';
+  const giroGlyph = boreste ? '↻' : bombordo ? '↺' : '•';
+  const giroTag = boreste ? 'BE' : bombordo ? 'BB' : '—';
 
   return (
     <div className="fixed top-0 left-0 w-full p-4 flex flex-col md:flex-row items-start md:items-center justify-between pointer-events-none z-50 gap-4">
@@ -138,63 +168,66 @@ export default function TopBar() {
         </DropdownMenu>
       </div>
 
-      {/* ── Centro/Direita: Telemetria Unificada ── */}
-      <div className="flex items-center gap-4 md:gap-6 px-4 md:px-6 py-2 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-full shadow-lg pointer-events-auto shrink-0 justify-center">
-        
+      {/* ── Centro/Direita: Telemetria Unificada (responsiva, sem overflow) ── */}
+      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 px-3 md:px-4 py-2 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg pointer-events-auto max-w-[calc(100vw-2rem)]">
+
         {/* Tensão */}
-        <div className="flex flex-col items-center min-w-[70px] md:min-w-[80px]">
-          <div className="flex items-center gap-1.5 text-emerald-400 font-mono text-base md:text-lg font-bold">
-            <Activity className="w-4 h-4 opacity-50 hidden md:block" />
+        <div className="flex flex-col items-center min-w-[60px] md:min-w-[66px]">
+          <div className="flex items-center gap-1 text-emerald-400 font-mono text-base md:text-lg font-bold">
             {telemetry.tension.toFixed(1)} <span className="text-xs">t</span>
           </div>
-          <span className="text-[0.6rem] md:text-[0.65rem] text-slate-400 uppercase tracking-widest font-semibold mt-0.5">Tensão</span>
+          <span className="text-[0.6rem] text-slate-400 uppercase tracking-wide font-semibold mt-0.5">Tensão</span>
         </div>
-
-        <div className="w-px h-6 md:h-8 bg-white/10"></div>
 
         {/* Vel Rebocador */}
-        <div className="flex flex-col items-center min-w-[70px] md:min-w-[80px]">
-          <div className="flex items-center gap-1.5 text-amber-400 font-mono text-base md:text-lg font-bold">
+        <div className="flex flex-col items-center min-w-[60px] md:min-w-[66px]">
+          <div className="flex items-center gap-1 text-amber-400 font-mono text-base md:text-lg font-bold">
             {telemetry.tugSpeed.toFixed(1)} <span className="text-xs">kn</span>
           </div>
-          <span className="text-[0.6rem] md:text-[0.65rem] text-slate-400 uppercase tracking-widest font-semibold mt-0.5">Vel RBCD</span>
+          <span className="text-[0.6rem] text-slate-400 uppercase tracking-wide font-semibold mt-0.5">Vel RBCD</span>
         </div>
 
-        <div className="w-px h-6 md:h-8 bg-white/10"></div>
-
-        {/* Vel Navio */}
-        <div className="flex flex-col items-center min-w-[70px] md:min-w-[80px]">
-          <div className="flex items-center gap-1.5 text-amber-400 font-mono text-base md:text-lg font-bold">
-            {telemetry.shipSpeed.toFixed(1)} <span className="text-xs">kn</span>
+        {/* Vel Navio — longitudinal (avante verde / a ré vermelho) */}
+        <div className="flex flex-col items-center min-w-[66px] md:min-w-[72px]">
+          <div className={cn("flex items-center gap-1 font-mono text-base md:text-lg font-bold", surgeColor)}>
+            <span className="text-sm">{surgeArrow}</span>
+            {Math.abs(telemetry.surge).toFixed(1)} <span className="text-xs">kn</span>
           </div>
-          <span className="text-[0.6rem] md:text-[0.65rem] text-slate-400 uppercase tracking-widest font-semibold mt-0.5">Vel NAVIO</span>
+          <span className={cn("text-[0.6rem] uppercase tracking-wide font-semibold mt-0.5", surgeColor)}>
+            Navio {surgeTag}
+          </span>
         </div>
 
-        {/* Separador */}
-        <div className="w-px h-6 md:h-8 bg-white/10"></div>
+        {/* Giro — boreste verde / bombordo vermelho */}
+        <div className="flex flex-col items-center min-w-[66px] md:min-w-[72px]">
+          <div className={cn("flex items-center gap-1 font-mono text-base md:text-lg font-bold", giroColor)}>
+            <span className="text-lg leading-none">{giroGlyph}</span>
+            {Math.abs(telemetry.rot).toFixed(0)} <span className="text-xs">°/min</span>
+          </div>
+          <span className={cn("text-[0.6rem] uppercase tracking-wide font-semibold mt-0.5", giroColor)}>
+            Giro {giroTag}
+          </span>
+        </div>
 
         {/* Deriva Oceânica */}
-        <div className="flex flex-col items-center min-w-[70px] md:min-w-[80px]">
+        <div className="flex flex-col items-center min-w-[56px]">
           <div className="relative w-6 h-6 md:w-7 md:h-7 rounded-full border border-sky-500/30 flex items-center justify-center mt-1">
-            <div 
+            <div
               className="absolute w-[2px] h-3 md:h-4 bg-sky-400 origin-bottom left-1/2 -translate-x-1/2"
               style={{ bottom: '50%', transform: `rotate(${telemetry.currentDir}deg)` }}
             >
               <div className="absolute -top-[5px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[4px] border-r-[4px] border-b-[6px] border-l-transparent border-r-transparent border-b-sky-400"></div>
             </div>
           </div>
-          <span className="text-[0.6rem] md:text-[0.65rem] text-slate-400 uppercase tracking-widest font-semibold mt-1">Deriva</span>
+          <span className="text-[0.6rem] text-slate-400 uppercase tracking-wide font-semibold mt-1">Deriva</span>
         </div>
 
-        <div className="w-px h-6 md:h-8 bg-white/10"></div>
-
         {/* Cabo Liberado */}
-        <div className="flex flex-col items-center min-w-[70px] md:min-w-[80px]">
-          <div className="flex items-center gap-1.5 text-sky-400 font-mono text-base md:text-lg font-bold">
-             <Waves className="w-4 h-4 opacity-50 hidden md:block" />
+        <div className="flex flex-col items-center min-w-[60px] md:min-w-[66px]">
+          <div className="flex items-center gap-1 text-sky-400 font-mono text-base md:text-lg font-bold">
              {telemetry.released.toFixed(1)} <span className="text-xs">m</span>
           </div>
-          <span className="text-[0.6rem] md:text-[0.65rem] text-slate-400 uppercase tracking-widest font-semibold mt-0.5">Liberado</span>
+          <span className="text-[0.6rem] text-slate-400 uppercase tracking-wide font-semibold mt-0.5">Liberado</span>
         </div>
 
       </div>

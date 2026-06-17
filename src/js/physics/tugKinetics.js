@@ -26,7 +26,9 @@ import { updateBuoys } from '../graphics/buoys.js';
 const STEERING_BOOST = 2.5;
 
 /** Coeficientes de drag local (por segundo). 1.0 = sem drag, 0.0 = para imediatamente. */
-const TUG_DRAG = { surge: 0.90, sway: 0.10, angular: 0.60 };
+// surge=0.968 → velocidade terminal de propulsão a 100% ≈ 12 nós (cortada para 11
+// pelo MAX_TUG_SPEED). Antes (0.90) o terminal era ~3.7 nós, longe do cap.
+const TUG_DRAG = { surge: 0.968, sway: 0.10, angular: 0.60 };
 const SHIP_DRAG = { surge: 0.99, sway: 0.95, angular: 0.98 }; // Drag orgânico de Navios (Não afundam no mel)
 
 // ─────────────────────────────────────────────────────────

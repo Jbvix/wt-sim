@@ -258,8 +258,8 @@ export function updatePhysics(dt) {
     tState.velocity.y        = (dampedLX * sinH + dampedLZ * cosH) + curZ;
     tState.angularVelocity  *= Math.pow(devConfig.tugDragRot, dt);
 
-    // Cap max velocity to 12 knots (em m/s)
-    const MAX_TUG_SPEED = 12 * 0.514444;
+    // Cap max velocity to 11 knots (em m/s)
+    const MAX_TUG_SPEED = 11 * 0.514444;
     const tugSpeedMag = Math.hypot(tState.velocity.x, tState.velocity.y);
     if (tugSpeedMag > MAX_TUG_SPEED) {
       tState.velocity.x = (tState.velocity.x / tugSpeedMag) * MAX_TUG_SPEED;

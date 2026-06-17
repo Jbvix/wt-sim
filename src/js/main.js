@@ -17,6 +17,7 @@ import { setupGraphics, onWindowResize } from './graphics/scene.js';
 import { loadAllAssets }       from './graphics/assets.js';
 import { buildWorld }          from './graphics/models.js';
 import { updateOcean }         from './graphics/water.js';
+import { updateTugJet }        from './graphics/jets.js';
 import { updatePhysics }       from './physics/tugKinetics.js';
 import { setupJoysticks }      from './ui/joysticks.js';
 import { setupWinchPanel }     from './ui/winchPanel.js';
@@ -436,6 +437,9 @@ function animate(timestamp) {
     Object.values(tugs).forEach(tug => {
       const tRope   = tug.rope;
       const tMeshes = tug.meshes;
+
+      // Jato de água dos propulsores (independente do cabo)
+      if (tMeshes?.jet) updateTugJet(tMeshes.jet, tug.thrusters, dt);
 
       if (!tRope || !tMeshes?.ropeLine) return;
 

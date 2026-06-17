@@ -22,6 +22,11 @@ const TUG_LENGTH = 32;
 /** Velocidade (nós) a partir da qual se considera "a navegar" (jato a metade). */
 const CRUISE_KN = 6;
 
+/** Abertura total do cone do jato (graus). */
+const CONE_FULL_DEG = 20;
+/** Fração lateral máxima = tan(meio-ângulo); usada para um cone de ângulo constante. */
+const CONE_SPREAD = 2 * Math.tan((CONE_FULL_DEG / 2) * Math.PI / 180);
+
 /** Posição local dos bocais dos propulsores (popa do rebocador). */
 const EMITTERS = [
   { x: -14, y: 0.6, z: -4 }, // BB (bombordo)
@@ -110,7 +115,8 @@ function respawn(s, i, em, angle, L) {
   s.dz[i] = jz;
   // Cada partícula chega a uma fração do alcance (espalha o jato em comprimento).
   s.reach[i]   = L * (0.55 + Math.random() * 0.45);
-  s.lateral[i] = (Math.random() - 0.5) * L * 0.16; // leque proporcional ao alcance
+  // Fração lateral (tan do ângulo) — cone de abertura total CONE_FULL_DEG.
+  s.lateral[i] = (Math.random() - 0.5) * CONE_SPREAD;
   s.age[i]  = 0;
   s.life[i] = 0.5 + Math.random() * 0.6;
 }
@@ -156,7 +162,7 @@ export function updateTugJet(s, thrusters, tugState, dt) {
     const f = s.age[i] / s.life[i];        // 0 → 1
     const dist = s.reach[i] * Math.pow(f, 0.8); // distância ao longo do jato
     const px = -s.dz[i], pz = s.dx[i];     // perpendicular (leque)
-    const lat = s.lateral[i] * f;
+    const lat = s.lateral[i] * dist;       // offset = tan(ângulo)·distância → cone de ângulo constante
 
     s.positions[o]     = s.ox[i] + s.dx[i] * dist + px * lat;
     s.positions[o + 1] = 0.15 + 0.5 * Math.sin(f * Math.PI); // ligeiro borrifo à tona

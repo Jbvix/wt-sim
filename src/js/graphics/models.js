@@ -106,15 +106,17 @@ const SHIP_STERN_NAV_LIGHT_Y = 16;     // ao nível do convés
  * @param {number}         x            - Posição local X
  * @param {number}         y            - Posição local Y
  * @param {number}         z            - Posição local Z
- * @param {number}         [reach=100]  - Alcance da PointLight (m)
+ * @param {number}         [reach=100]      - Alcance da PointLight (m)
+ * @param {number}         [bulbRadius=1.5]  - Raio do bulbo visível (m). Menor
+ *                                             no rebocador (32 m) que no navio (225 m).
  */
-function createNavLight(parent, color, x, y, z, reach = 100) {
+function createNavLight(parent, color, x, y, z, reach = 100, bulbRadius = 1.5) {
   const light = new THREE.PointLight(color, 0, reach);
   light.userData.baseIntensity = 3.0;
   light.position.set(x, y, z);
 
   const bulb = new THREE.Mesh(
-    new THREE.SphereGeometry(1.5, 8, 8), // Aumentado ligeiramente para visibilidade
+    new THREE.SphereGeometry(bulbRadius, 10, 10),
     new THREE.MeshBasicMaterial({ color })
   );
   light.add(bulb);
@@ -227,10 +229,11 @@ function createTugboatMesh(tugId, colorHex) {
   g.hitboxes.push(winchHitbox);
 
   // ── Luzes de Navegação do Rebocador ────────────────────
-  createNavLight(group, 0xff0000, -5, 10, -4.5, 150); // BB (vermelho)
-  createNavLight(group, 0x00ff00, -5, 10,  4.5, 150); // BE (verde)
-  createNavLight(group, 0xffffff, -4, 13,  0,   300); // Mastro
-  createNavLight(group, 0xffffff, -16, 5,  0,   150); // Popa
+  // Bulbos pequenos (0.4 m) — proporcionais ao rebocador de 32 m.
+  createNavLight(group, 0xff0000, -3, 9,  -4.5, 150, 0.4); // BB (vermelho) — asa de bombordo
+  createNavLight(group, 0x00ff00, -3, 9,   4.5, 150, 0.4); // BE (verde) — asa de boreste
+  createNavLight(group, 0xffffff,  0, 15,  0,   300, 0.4); // Mastro (topo)
+  createNavLight(group, 0xffffff, -15, 4.5, 0,  150, 0.4); // Popa (convés)
 
   // ── Vetor Cinemático Resultante (ArrowHelper) ──────────
   // (As setas ciano de jato por propulsor foram removidas — o jato de água

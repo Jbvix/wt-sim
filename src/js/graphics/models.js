@@ -232,23 +232,9 @@ function createTugboatMesh(tugId, colorHex) {
   createNavLight(group, 0xffffff, -4, 13,  0,   300); // Mastro
   createNavLight(group, 0xffffff, -16, 5,  0,   150); // Popa
 
-  // ── Vetores Cinemáticos (ArrowHelpers) ─────────────────
-  const arrowBB = new THREE.ArrowHelper(
-    new THREE.Vector3(-1, 0, 0),
-    new THREE.Vector3(-14, 0, -4),
-    0.1, 0x00ffff, 1, 0.5
-  );
-  group.add(arrowBB);
-  meshes.jetArrowBB = arrowBB;
-
-  const arrowBE = new THREE.ArrowHelper(
-    new THREE.Vector3(-1, 0, 0),
-    new THREE.Vector3(-14, 0, 4),
-    0.1, 0x00ffff, 1, 0.5
-  );
-  group.add(arrowBE);
-  meshes.jetArrowBE = arrowBE;
-
+  // ── Vetor Cinemático Resultante (ArrowHelper) ──────────
+  // (As setas ciano de jato por propulsor foram removidas — o jato de água
+  //  passou a indicar a direção/intensidade de cada propulsor.)
   const resArrow = new THREE.ArrowHelper(
     new THREE.Vector3(1, 0, 0),
     new THREE.Vector3(0, 6, 0),

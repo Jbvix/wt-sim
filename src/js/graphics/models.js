@@ -17,6 +17,7 @@ import { tugs } from '../fleet/tugData.js';
 import { createBuoys } from './buoys.js';
 import { modelsCache } from './assets.js';
 import { createOcean } from './water.js';
+import { createTugJet } from './jets.js';
 
 // ─────────────────────────────────────────────────────────
 // 0. FÁBRICA DE CABOS COM ESPESSURA (Line2 / fat lines)
@@ -255,6 +256,11 @@ function createTugboatMesh(tugId, colorHex) {
   );
   group.add(resArrow);
   meshes.resultantArrow = resArrow;
+
+  // ── Jato de Água dos Propulsores (partículas) ──────────
+  const jet = createTugJet();
+  group.add(jet.points);
+  meshes.jet = jet;
 
   // ── Cabo HMPE (Curva Bézier dinâmica, espessura real) ──
   const ropeL = createRopeLine(0xffff00, 0.35); // hawser de reboque ~0.35 m

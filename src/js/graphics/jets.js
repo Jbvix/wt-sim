@@ -1,18 +1,26 @@
 /**
  * @file        src/js/graphics/jets.js
  * @description Efeito visual de jato de água dos propulsores azimutais.
- *              Sistema de partículas (espuma/borrifo) emitido em cada propulsor,
- *              na direção do jato (inverso do empuxo), com intensidade proporcional
- *              à potência (RPM). Cada partícula tem alpha e tamanho próprios via
- *              ShaderMaterial. As partículas vivem no referencial local do grupo
- *              do rebocador (acompanham o casco no campo próximo do propulsor).
+ *              Partículas (espuma/borrifo) emitidas em cada propulsor na direção
+ *              do jato (inverso do empuxo). O COMPRIMENTO do jato é proporcional
+ *              à força de propulsão (RPM) e ao regime:
+ *                · a empurrar (rebocador parado, sob carga) → comprimento ≈ casco
+ *                · a navegar  (rebocador em seguimento)      → metade do casco
+ *              A distância de cada partícula é parametrizada diretamente pelo
+ *              comprimento-alvo, garantindo controlo visual preciso.
  * @author      Jossian Brito <jossiancosta@gmail.com>
  */
 
 import * as THREE from 'three';
 
 /** Partículas por propulsor. 2 propulsores → 2× este valor por rebocador. */
-const PER_THRUSTER = 70;
+const PER_THRUSTER = 80;
+
+/** Comprimento do rebocador (m) — jato máximo a empurrar a toda a força. */
+const TUG_LENGTH = 32;
+
+/** Velocidade (nós) a partir da qual se considera "a navegar" (jato a metade). */
+const CRUISE_KN = 6;
 
 /** Posição local dos bocais dos propulsores (popa do rebocador). */
 const EMITTERS = [
@@ -76,52 +84,55 @@ export function createTugJet() {
 
   return {
     points, positions, alphas, sizes,
-    vel:     new Float32Array(total * 3),
     age:     new Float32Array(total).fill(99),
     life:    new Float32Array(total).fill(1),
+    // parâmetros congelados no nascimento (referencial local do grupo):
+    ox: new Float32Array(total), oy: new Float32Array(total), oz: new Float32Array(total),
+    dx: new Float32Array(total), dz: new Float32Array(total),  // direção do jato
+    reach:   new Float32Array(total),  // distância-alvo (m)
+    lateral: new Float32Array(total),  // amplitude do leque (m)
     emitter: Uint8Array.from({ length: total }, (_, i) => (i < PER_THRUSTER ? 0 : 1)),
   };
 }
 
-/** (Re)nasce uma partícula no bocal do propulsor `em`, com velocidade no jato. */
-function respawn(s, i, em, thrust, angle) {
+/** (Re)nasce uma partícula no bocal do propulsor `em`, com alcance `L` metros. */
+function respawn(s, i, em, angle, L) {
   const e = EMITTERS[em];
-  const o = i * 3;
 
   // Direção do jato (água ejetada) — inverso do empuxo, no referencial local.
   const jx = -Math.cos(angle);
   const jz = -Math.sin(angle);
-  // Perpendicular para abrir o leque do jato.
-  const px = -jz, pz = jx;
-  const lat = (Math.random() - 0.5) * 0.6;
 
-  const speed = (7 + Math.random() * 7) * (0.4 + thrust * 0.6);
-
-  s.positions[o]     = e.x + (Math.random() - 0.5) * 1.2;
-  s.positions[o + 1] = e.y + (Math.random() - 0.5) * 0.3;
-  s.positions[o + 2] = e.z + (Math.random() - 0.5) * 1.2;
-
-  s.vel[o]     = (jx + px * lat) * speed;
-  s.vel[o + 1] = 0.6 + Math.random() * 1.4; // borrifo leve para cima
-  s.vel[o + 2] = (jz + pz * lat) * speed;
-
+  s.ox[i] = e.x + (Math.random() - 0.5) * 1.2;
+  s.oy[i] = e.y + (Math.random() - 0.5) * 0.3;
+  s.oz[i] = e.z + (Math.random() - 0.5) * 1.2;
+  s.dx[i] = jx;
+  s.dz[i] = jz;
+  // Cada partícula chega a uma fração do alcance (espalha o jato em comprimento).
+  s.reach[i]   = L * (0.55 + Math.random() * 0.45);
+  s.lateral[i] = (Math.random() - 0.5) * L * 0.16; // leque proporcional ao alcance
   s.age[i]  = 0;
-  s.life[i] = 0.45 + Math.random() * 0.7;
+  s.life[i] = 0.5 + Math.random() * 0.6;
 }
 
 /**
  * Avança o sistema de partículas de um rebocador.
  * @param {Object} s          Estado devolvido por createTugJet()
  * @param {Object} thrusters  { bb, be } com { thrust (0-1), angle (rad) }
+ * @param {Object} tugState   { velocity: THREE.Vector2 } para detetar empurrar/navegar
  * @param {number} dt         Delta time (s)
  */
-export function updateTugJet(s, thrusters, dt) {
+export function updateTugJet(s, thrusters, tugState, dt) {
   if (!s || dt <= 0) return;
   if (dt > 0.1) dt = 0.1; // estabilidade
 
+  // Regime: parado (a empurrar) → fator 1.0 ; em velocidade (a navegar) → 0.5.
+  const speedKn = tugState
+    ? Math.hypot(tugState.velocity.x, tugState.velocity.y) * 1.94384
+    : 0;
+  const pushFactor = 1.0 - 0.5 * Math.min(speedKn / CRUISE_KN, 1);
+
   const sides = ['bb', 'be'];
-  const dragXZ = Math.pow(0.10, dt); // espuma desacelera depressa na água
-  const dragY  = Math.pow(0.40, dt);
 
   for (let i = 0; i < s.age.length; i++) {
     const t = thrusters[sides[s.emitter[i]]];
@@ -130,7 +141,9 @@ export function updateTugJet(s, thrusters, dt) {
     if (s.age[i] >= s.life[i]) {
       // Emissão: só renasce se houver potência; taxa ∝ thrust.
       if (t && t.thrust > 0.02 && Math.random() < 0.25 + t.thrust * 0.75) {
-        respawn(s, i, s.emitter[i], t.thrust, t.angle);
+        // Comprimento-alvo = casco × potência × regime (empurrar/navegar).
+        const L = TUG_LENGTH * t.thrust * pushFactor;
+        respawn(s, i, s.emitter[i], t.angle, L);
       } else {
         s.alphas[i] = 0;
         s.sizes[i]  = 0;
@@ -140,18 +153,17 @@ export function updateTugJet(s, thrusters, dt) {
     }
 
     const o = i * 3;
-    s.positions[o]     += s.vel[o]     * dt;
-    s.positions[o + 1] += s.vel[o + 1] * dt;
-    s.positions[o + 2] += s.vel[o + 2] * dt;
+    const f = s.age[i] / s.life[i];        // 0 → 1
+    const dist = s.reach[i] * Math.pow(f, 0.8); // distância ao longo do jato
+    const px = -s.dz[i], pz = s.dx[i];     // perpendicular (leque)
+    const lat = s.lateral[i] * f;
 
-    s.vel[o]     *= dragXZ;
-    s.vel[o + 2] *= dragXZ;
-    s.vel[o + 1]  = s.vel[o + 1] * dragY - 2.5 * dt; // borrifo cai e assenta
-    if (s.positions[o + 1] < 0.1) s.positions[o + 1] = 0.1; // fica à tona
+    s.positions[o]     = s.ox[i] + s.dx[i] * dist + px * lat;
+    s.positions[o + 1] = 0.15 + 0.5 * Math.sin(f * Math.PI); // ligeiro borrifo à tona
+    s.positions[o + 2] = s.oz[i] + s.dz[i] * dist + pz * lat;
 
-    const f = s.age[i] / s.life[i]; // 0 → 1
-    s.alphas[i] = (1 - f) * 0.85;   // desvanece
-    s.sizes[i]  = 2.5 + f * 6.0;    // espalha-se ao dispersar
+    s.alphas[i] = (1 - f) * 0.85;          // desvanece
+    s.sizes[i]  = 2.0 + f * 6.0;           // espalha-se ao dispersar
   }
 
   s.points.geometry.attributes.position.needsUpdate = true;

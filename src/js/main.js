@@ -439,7 +439,7 @@ function animate(timestamp) {
       const tMeshes = tug.meshes;
 
       // Jato de água dos propulsores (independente do cabo)
-      if (tMeshes?.jet) updateTugJet(tMeshes.jet, tug.thrusters, dt);
+      if (tMeshes?.jet) updateTugJet(tMeshes.jet, tug.thrusters, tug.state, dt);
 
       if (!tRope || !tMeshes?.ropeLine) return;
 

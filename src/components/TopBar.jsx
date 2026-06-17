@@ -168,79 +168,66 @@ export default function TopBar() {
         </DropdownMenu>
       </div>
 
-      {/* ── Centro/Direita: Telemetria Unificada ── */}
-      <div className="flex items-center gap-4 md:gap-6 px-4 md:px-6 py-2 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-full shadow-lg pointer-events-auto shrink-0 justify-center">
-        
+      {/* ── Centro/Direita: Telemetria Unificada (responsiva, sem overflow) ── */}
+      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 px-3 md:px-4 py-2 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg pointer-events-auto max-w-[calc(100vw-2rem)]">
+
         {/* Tensão */}
-        <div className="flex flex-col items-center min-w-[70px] md:min-w-[80px]">
-          <div className="flex items-center gap-1.5 text-emerald-400 font-mono text-base md:text-lg font-bold">
-            <Activity className="w-4 h-4 opacity-50 hidden md:block" />
+        <div className="flex flex-col items-center min-w-[60px] md:min-w-[66px]">
+          <div className="flex items-center gap-1 text-emerald-400 font-mono text-base md:text-lg font-bold">
             {telemetry.tension.toFixed(1)} <span className="text-xs">t</span>
           </div>
-          <span className="text-[0.6rem] md:text-[0.65rem] text-slate-400 uppercase tracking-widest font-semibold mt-0.5">Tensão</span>
+          <span className="text-[0.6rem] text-slate-400 uppercase tracking-wide font-semibold mt-0.5">Tensão</span>
         </div>
-
-        <div className="w-px h-6 md:h-8 bg-white/10"></div>
 
         {/* Vel Rebocador */}
-        <div className="flex flex-col items-center min-w-[70px] md:min-w-[80px]">
-          <div className="flex items-center gap-1.5 text-amber-400 font-mono text-base md:text-lg font-bold">
+        <div className="flex flex-col items-center min-w-[60px] md:min-w-[66px]">
+          <div className="flex items-center gap-1 text-amber-400 font-mono text-base md:text-lg font-bold">
             {telemetry.tugSpeed.toFixed(1)} <span className="text-xs">kn</span>
           </div>
-          <span className="text-[0.6rem] md:text-[0.65rem] text-slate-400 uppercase tracking-widest font-semibold mt-0.5">Vel RBCD</span>
+          <span className="text-[0.6rem] text-slate-400 uppercase tracking-wide font-semibold mt-0.5">Vel RBCD</span>
         </div>
 
-        <div className="w-px h-6 md:h-8 bg-white/10"></div>
-
         {/* Vel Navio — longitudinal (avante verde / a ré vermelho) */}
-        <div className="flex flex-col items-center min-w-[70px] md:min-w-[80px]">
+        <div className="flex flex-col items-center min-w-[66px] md:min-w-[72px]">
           <div className={cn("flex items-center gap-1 font-mono text-base md:text-lg font-bold", surgeColor)}>
             <span className="text-sm">{surgeArrow}</span>
             {Math.abs(telemetry.surge).toFixed(1)} <span className="text-xs">kn</span>
           </div>
-          <span className="text-[0.6rem] md:text-[0.65rem] text-slate-400 uppercase tracking-widest font-semibold mt-0.5">
-            Vel NAVIO <span className={cn("font-bold", surgeColor)}>{surgeTag}</span>
+          <span className={cn("text-[0.6rem] uppercase tracking-wide font-semibold mt-0.5", surgeColor)}>
+            Navio {surgeTag}
           </span>
         </div>
 
-        <div className="w-px h-6 md:h-8 bg-white/10"></div>
-
-        {/* Giro — taxa de evolução (boreste verde / bombordo vermelho) */}
-        <div className="flex flex-col items-center min-w-[70px] md:min-w-[80px]">
+        {/* Giro — boreste verde / bombordo vermelho */}
+        <div className="flex flex-col items-center min-w-[66px] md:min-w-[72px]">
           <div className={cn("flex items-center gap-1 font-mono text-base md:text-lg font-bold", giroColor)}>
             <span className="text-lg leading-none">{giroGlyph}</span>
             {Math.abs(telemetry.rot).toFixed(0)} <span className="text-xs">°/min</span>
           </div>
-          <span className="text-[0.6rem] md:text-[0.65rem] text-slate-400 uppercase tracking-widest font-semibold mt-0.5">
-            Giro <span className={cn("font-bold", giroColor)}>{giroTag}</span>
+          <span className={cn("text-[0.6rem] uppercase tracking-wide font-semibold mt-0.5", giroColor)}>
+            Giro {giroTag}
           </span>
         </div>
 
-        {/* Separador */}
-        <div className="w-px h-6 md:h-8 bg-white/10"></div>
-
         {/* Deriva Oceânica */}
-        <div className="flex flex-col items-center min-w-[70px] md:min-w-[80px]">
+        <div className="flex flex-col items-center min-w-[56px]">
           <div className="relative w-6 h-6 md:w-7 md:h-7 rounded-full border border-sky-500/30 flex items-center justify-center mt-1">
-            <div 
+            <div
               className="absolute w-[2px] h-3 md:h-4 bg-sky-400 origin-bottom left-1/2 -translate-x-1/2"
               style={{ bottom: '50%', transform: `rotate(${telemetry.currentDir}deg)` }}
             >
               <div className="absolute -top-[5px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[4px] border-r-[4px] border-b-[6px] border-l-transparent border-r-transparent border-b-sky-400"></div>
             </div>
           </div>
-          <span className="text-[0.6rem] md:text-[0.65rem] text-slate-400 uppercase tracking-widest font-semibold mt-1">Deriva</span>
+          <span className="text-[0.6rem] text-slate-400 uppercase tracking-wide font-semibold mt-1">Deriva</span>
         </div>
 
-        <div className="w-px h-6 md:h-8 bg-white/10"></div>
-
         {/* Cabo Liberado */}
-        <div className="flex flex-col items-center min-w-[70px] md:min-w-[80px]">
-          <div className="flex items-center gap-1.5 text-sky-400 font-mono text-base md:text-lg font-bold">
-             <Waves className="w-4 h-4 opacity-50 hidden md:block" />
+        <div className="flex flex-col items-center min-w-[60px] md:min-w-[66px]">
+          <div className="flex items-center gap-1 text-sky-400 font-mono text-base md:text-lg font-bold">
              {telemetry.released.toFixed(1)} <span className="text-xs">m</span>
           </div>
-          <span className="text-[0.6rem] md:text-[0.65rem] text-slate-400 uppercase tracking-widest font-semibold mt-0.5">Liberado</span>
+          <span className="text-[0.6rem] text-slate-400 uppercase tracking-wide font-semibold mt-0.5">Liberado</span>
         </div>
 
       </div>

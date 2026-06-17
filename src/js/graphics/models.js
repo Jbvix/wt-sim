@@ -363,6 +363,19 @@ export function buildWorld() {
       if (child.isMesh) {
         child.castShadow = true;
         child.receiveShadow = true;
+
+        // [FIX] O material "Bridge" (superestrutura) vem do GLB com
+        // alphaMode=BLEND, deixando a casaria translúcida (vê-se através dela).
+        // Não há vidros reais a renderizar — força opaco.
+        const mats = Array.isArray(child.material) ? child.material : [child.material];
+        mats.forEach(m => {
+          if (m && m.transparent) {
+            m.transparent = false;
+            m.depthWrite  = true;
+            m.alphaTest   = 0;
+            m.needsUpdate = true;
+          }
+        });
       }
     });
 

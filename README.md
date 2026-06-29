@@ -44,7 +44,6 @@ Aceda à ligação principal onde o **Deploy é feito pela Netlify** através de
 
 ### Instalação Local (Desenvolvimento)
 ```bash
-# Clone o repositório
 git clone https://github.com/Jbvix/wt-sim.git
 
 # Corra um servidor local para que os imports ES6 operem nativamente:
@@ -68,7 +67,7 @@ wt-sim/
 │   │   ├── graphics/        # Three.JS Scene Builder (sceneSetup.js, models.js)
 │   │   ├── physics/         # Colisões SAT (collision.js) e Fluidos/Integrador (tugKinetics.js)
 │   │   ├── fleet/           # Configuração de Força Naval (tugData.js)
-│   │   └── state/           # Fonte única de verdade (globals.js)
+│   │   ├── state/           # Fonte única de verdade (globals.js)
 ├── netlify.toml             # Target point Netlify (root point)
 └── README.md
 ```
@@ -95,6 +94,13 @@ wt-sim/
 
 ---
 
-## 📄 Licença
+## 📄 Licença e Copyright
 
-Uso Livre e Orientado ao Estudo de Simuladores Avançados (Licença MIT).
+**Copyright (c) 2026 Jossian Brito**
+
+Este projeto é licenciado sob a **Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)**.
+
+- Uso comercial não é permitido sem autorização expressa prévia do autor.
+- A atribuição ao autor original é obrigatória.
+
+O texto completo da licença está no arquivo [LICENSE](LICENSE).
